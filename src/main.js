@@ -128,6 +128,29 @@ $('#recovery-form').addEventListener('submit', async (e) => {
 
 $('#logout-btn').addEventListener('click', () => supabase.auth.signOut());
 
+// ------------------------------------------------------------------ accesso libero (prove)
+// Con VITE_ACCESSO_LIBERO=1 il sito entra senza iscrizione: Supabase crea un
+// utente "ospite" (anonimo) legato a questo browser. I dati restano salvati.
+const ACCESSO_LIBERO = import.meta.env.VITE_ACCESSO_LIBERO === '1';
+
+async function enterAsGuest() {
+  authMsg('Apertura…');
+  const { error } = await supabase.auth.signInAnonymously();
+  if (error) {
+    showAuth('login');
+    authMsg('Accesso libero non attivo su Supabase: abilita "Allow anonymous sign-ins". (' + errText(error) + ')', true);
+  }
+}
+
+$('#guest-btn').hidden = !ACCESSO_LIBERO;
+$('#guest-btn').addEventListener('click', async () => {
+  const { data } = await supabase.auth.getSession();
+  if (data.session?.user) { $('#auth-view').hidden = true; $('#app-view').hidden = false; }
+  else enterAsGuest();
+});
+
+$('#login-btn').addEventListener('click', () => showAuth('login'));
+
 supabase.auth.onAuthStateChange((event, session) => {
   // le chiamate a Supabase vanno fuori dalla callback (evita blocchi)
   setTimeout(() => {
@@ -136,7 +159,8 @@ supabase.auth.onAuthStateChange((event, session) => {
       if (state.user?.id !== session.user.id) startApp(session.user);
     } else {
       stopApp();
-      showAuth('login');
+      if (ACCESSO_LIBERO) enterAsGuest();
+      else showAuth('login');
     }
   }, 0);
 });
@@ -146,6 +170,10 @@ async function startApp(user) {
   state.user = user;
   $('#auth-view').hidden = true;
   $('#app-view').hidden = false;
+  const guest = !!user.is_anonymous;
+  $('#guest-badge').hidden = !guest;
+  $('#login-btn').hidden = !guest;
+  $('#logout-btn').hidden = guest;   // un ospite che "esce" perderebbe i suoi dati
 
   await loadProfile();
   initCalendar();
@@ -176,7 +204,7 @@ $('#profile-btn').addEventListener('click', () => {
   const f = $('#profile-form');
   f.display_name.value = state.profile.display_name;
   f.color.value = state.profile.color;
-  $('#profile-email').textContent = state.user.email;
+  $('#profile-email').textContent = state.user.email || 'Ospite (modalità prova, senza email)';
   $('#profile-dialog').returnValue = '';
   $('#profile-dialog').showModal();
 });

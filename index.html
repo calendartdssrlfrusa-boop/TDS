@@ -25,6 +25,7 @@
         <label>Password <input name="password" type="password" required autocomplete="current-password" /></label>
         <button class="btn primary" type="submit">Accedi</button>
         <button class="link" type="button" id="forgot-btn">Password dimenticata?</button>
+        <button class="btn" type="button" id="guest-btn" hidden>Continua senza account (prova)</button>
       </form>
 
       <form id="signup-form" class="stack" hidden>
@@ -47,10 +48,11 @@
   <!-- ====================== APP ====================== -->
   <section id="app-view" class="app" hidden>
     <header class="topbar">
-      <div class="brand"><img src="/icon.svg" alt="" width="28" height="28" /> <span>Renko Calendar</span></div>
+      <div class="brand"><img src="/icon.svg" alt="" width="28" height="28" /> <span>Renko Calendar</span> <span class="badge" id="guest-badge" hidden>prova</span></div>
       <div class="topbar-right">
         <button class="btn ghost" id="profile-btn" title="Il mio profilo"><span class="dot" id="me-dot"></span><span id="me-name"></span></button>
         <button class="btn ghost icon" id="team-toggle" title="Gruppo" aria-label="Mostra gruppo">👥</button>
+        <button class="btn ghost" id="login-btn" hidden>Accedi</button>
         <button class="btn ghost" id="logout-btn">Esci</button>
       </div>
     </header>

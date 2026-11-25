@@ -44,6 +44,8 @@ git push -u origin main
 3. **Environment variables** (Production e Preview):
    - `VITE_SUPABASE_URL` = Project URL
    - `VITE_SUPABASE_ANON_KEY` = anon key
+   - `VITE_ACCESSO_LIBERO` = `1` → per ora: si entra senza iscrizione (utente ospite).
+     Quando vuoi gli accessi veri cancellala e rifai il deploy.
 4. Deploy. Ottieni un indirizzo tipo `renko-calendar.pages.dev` (puoi collegare un tuo dominio).
 
 ## 4. Torna su Supabase (importante per le email)
