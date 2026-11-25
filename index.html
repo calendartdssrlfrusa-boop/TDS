@@ -106,7 +106,15 @@ input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); m
 .auth-card { width: min(400px, 100%); background: var(--bg); border-radius: 24px; box-shadow: var(--shadow); padding: 2rem; display: flex; flex-direction: column; gap: 1.1rem; }
 .brand { display: flex; align-items: center; gap: .6rem; font-size: 1.3rem; color: var(--text); white-space: nowrap; }
 .brand img { width: 36px; height: 36px; }
-#auth-msg { color: var(--muted); } #auth-msg.error { color: var(--danger); }
+#auth-msg { color: var(--muted); } #auth-msg.error { color: var(--danger); } #auth-msg.ok { color: #1e8e3e; }
+.tabs { display: flex; background: var(--surface); border-radius: 999px; padding: 4px; }
+.tabs button { flex: 1; border: 0; background: none; padding: .55rem; border-radius: 999px; cursor: pointer; color: var(--muted); font-weight: 500; }
+.tabs button.active { background: var(--bg); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.auth-links { display: flex; justify-content: space-between; gap: .5rem; flex-wrap: wrap; }
+.auth-links button { background: none; border: 0; padding: 0; color: var(--accent); cursor: pointer; font-size: .85rem; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+.two label { min-width: 0; } .two input { width: 100%; }
+.role-tag { display: inline-block; font-size: .7rem; padding: .05rem .45rem; border-radius: 99px; background: var(--accent-soft); color: var(--text); margin-left: .3rem; vertical-align: 1px; }
 
 /* ---------------- struttura ---------------- */
 .app { height: 100dvh; display: flex; flex-direction: column; background: var(--surface); }
@@ -404,11 +412,40 @@ dialog::backdrop { background: rgba(0,0,0,.35); }
 <section id="auth-view" class="auth" hidden>
   <div class="auth-card">
     <div class="brand"><img id="logo-auth" alt=""> Renko Calendar</div>
+    <div class="tabs" id="auth-tabs">
+      <button type="button" data-tab="login" class="active">Accedi</button>
+      <button type="button" data-tab="signup">Registrati</button>
+    </div>
+
     <form id="login-form" class="stack">
       <label>Email <input name="email" type="email" required autocomplete="email"></label>
       <label>Password <input name="password" type="password" required autocomplete="current-password"></label>
       <button class="btn primary" type="submit" style="justify-content:center">Accedi</button>
+      <div class="auth-links">
+        <button type="button" id="forgot-btn">Password dimenticata?</button>
+        <button type="button" id="resend-btn" hidden>Rinvia email di conferma</button>
+      </div>
     </form>
+
+    <form id="signup-form" class="stack" hidden>
+      <div class="two">
+        <label>Nome <input name="first_name" required maxlength="40" autocomplete="given-name"></label>
+        <label>Cognome <input name="last_name" required maxlength="40" autocomplete="family-name"></label>
+      </div>
+      <label>Email <input name="email" type="email" required autocomplete="email"></label>
+      <label>Password <input name="password" type="password" required minlength="8" autocomplete="new-password" placeholder="almeno 8 caratteri"></label>
+      <label>Conferma password <input name="password2" type="password" required minlength="8" autocomplete="new-password"></label>
+      <button class="btn primary" type="submit" style="justify-content:center">Crea account</button>
+      <p class="muted small" style="margin:0">Riceverai un'email: clicca il link per confermare, poi potrai accedere.</p>
+    </form>
+
+    <form id="recovery-form" class="stack" hidden>
+      <p style="margin:0">Scegli la nuova password.</p>
+      <label>Nuova password <input name="password" type="password" required minlength="8" autocomplete="new-password"></label>
+      <label>Conferma password <input name="password2" type="password" required minlength="8" autocomplete="new-password"></label>
+      <button class="btn primary" type="submit" style="justify-content:center">Salva password</button>
+    </form>
+
     <p id="auth-msg" class="msg" role="status"></p>
   </div>
 </section>
@@ -470,7 +507,7 @@ dialog::backdrop { background: rgba(0,0,0,.35); }
         <h2>Gruppo di lavoro</h2>
         <button class="icon-btn sm" id="right-close" title="Chiudi" data-ico="x"></button>
       </div>
-      <p id="no-team" class="muted small" hidden>Non sei ancora in nessun gruppo. Creane uno o entra con il codice di un collega.</p>
+      <p id="no-team" class="muted small" hidden>Il tuo account non è ancora nel gruppo di lavoro. Contatta l'amministratore.</p>
       <div id="team-box" class="stack" hidden>
         <select id="team-select" aria-label="Gruppo"></select>
         <div class="invite">
@@ -516,7 +553,7 @@ dialog::backdrop { background: rgba(0,0,0,.35); }
   <!-- menu account -->
   <div class="menu" id="avatar-menu" hidden>
     <div class="head"><b id="menu-name"></b><span class="muted small" id="menu-email"></span></div>
-    <button type="button" id="menu-profile"><span data-ico="user"></span> Nome e colore</button>
+    <button type="button" id="menu-profile"><span data-ico="user"></span> Il mio profilo</button>
     <label><input type="checkbox" id="opt-weekends"> Mostra fine settimana</label>
     <label><input type="checkbox" id="opt-past"> Attenua impegni passati</label>
     <button type="button" id="menu-notify"><span data-ico="bell"></span> <span id="notify-label">Attiva notifiche</span></button>
@@ -661,8 +698,11 @@ dialog::backdrop { background: rgba(0,0,0,.35); }
 
 <dialog id="profile-dialog" style="width:min(400px, calc(100% - 1.5rem));height:fit-content">
   <form method="dialog" class="stack" id="profile-form">
-    <h2>Nome e colore</h2>
-    <label>Nome visualizzato <input name="display_name" required maxlength="60"></label>
+    <h2>Il mio profilo</h2>
+    <div class="two">
+      <label>Nome <input name="first_name" required maxlength="40"></label>
+      <label>Cognome <input name="last_name" maxlength="40"></label>
+    </div>
     <label>Il tuo colore (come ti vedono i colleghi)</label>
     <div class="colors" id="profile-colors"></div>
     <div class="dialog-actions"><span class="spacer"></span>
@@ -747,7 +787,12 @@ function toast(text, isError = false) {
 function errText(e) {
   const m = e?.message || String(e);
   if (/Invalid login credentials/i.test(m)) return 'Email o password errati.';
-  if (/Email not confirmed/i.test(m)) return 'Email non confermata.';
+  if (/Email not confirmed/i.test(m)) return "Email non ancora confermata: apri il link che ti abbiamo mandato (guarda anche nello spam).";
+  if (/already registered|already been registered|User already/i.test(m)) return 'Questa email è già registrata: usa "Accedi" o "Password dimenticata?".';
+  if (/Signups not allowed|signup.*disabled/i.test(m)) return 'Le registrazioni sono chiuse. Contatta l\'amministratore.';
+  if (/rate limit|too many/i.test(m)) return 'Troppe richieste: riprova tra qualche minuto.';
+  if (/Password should be/i.test(m)) return 'La password deve avere almeno 8 caratteri.';
+  if (/Unable to validate email|invalid.*email/i.test(m)) return 'Indirizzo email non valido.';
   if (/permission denied/i.test(m)) return 'Permesso negato dal database (' + m + ')';
   return m;
 }
@@ -819,28 +864,98 @@ const state = {
 // =====================================================================
 //  ACCESSO
 // =====================================================================
-function showAuth() {
+function showAuth(tab = 'login') {
   $('#app-view').hidden = true;
   $('#quick-view').hidden = true;
   $('#auth-view').hidden = false;
+  setAuthTab(tab);
+}
+function setAuthTab(tab) {
+  $$('#auth-tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
+  $('#auth-tabs').hidden = tab === 'recovery';
+  $('#login-form').hidden = tab !== 'login';
+  $('#signup-form').hidden = tab !== 'signup';
+  $('#recovery-form').hidden = tab !== 'recovery';
   authMsg('');
 }
-function authMsg(text, isError = false) {
+function authMsg(text, kind = '') {
   const el = $('#auth-msg');
   el.textContent = text;
-  el.classList.toggle('error', isError);
+  el.classList.toggle('error', kind === true || kind === 'error');
+  el.classList.toggle('ok', kind === 'ok');
 }
+$$('#auth-tabs button').forEach((b) => b.addEventListener('click', () => setAuthTab(b.dataset.tab)));
+
 $('#login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const f = new FormData(e.target);
   authMsg('Accesso in corso…');
+  $('#resend-btn').hidden = true;
   const { error } = await sb.auth.signInWithPassword({ email: f.get('email').trim(), password: f.get('password') });
-  if (error) authMsg(errText(error), true);
+  if (error) {
+    authMsg(errText(error), true);
+    if (/Email not confirmed/i.test(error.message)) $('#resend-btn').hidden = false;
+  }
+});
+
+$('#signup-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const first = f.first_name.value.trim(), last = f.last_name.value.trim(), email = f.email.value.trim();
+  if (f.password.value !== f.password2.value) return authMsg('Le due password non coincidono.', true);
+  authMsg('Creazione account…');
+  const { data, error } = await sb.auth.signUp({
+    email,
+    password: f.password.value,
+    options: {
+      data: { first_name: first, last_name: last, display_name: `${first} ${last}`.trim() },
+      emailRedirectTo: BASE_URL,
+    },
+  });
+  if (error) return authMsg(errText(error), true);
+  // Supabase non rivela se l'email esiste già: in quel caso non crea identità
+  if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+    return authMsg('Questa email è già registrata: usa "Accedi" o "Password dimenticata?".', true);
+  }
+  f.reset();
+  setAuthTab('login');
+  $('#login-form').email.value = email;
+  authMsg(`Fatto! Ti abbiamo mandato un'email a ${email}: clicca il link per confermare, poi accedi qui.`, 'ok');
+  $('#resend-btn').hidden = false;
+});
+
+$('#resend-btn').addEventListener('click', async () => {
+  const email = $('#login-form').email.value.trim();
+  if (!email) return authMsg('Scrivi prima la tua email qui sopra.', true);
+  const { error } = await sb.auth.resend({ type: 'signup', email, options: { emailRedirectTo: BASE_URL } });
+  authMsg(error ? errText(error) : `Email di conferma inviata di nuovo a ${email}.`, error ? true : 'ok');
+});
+
+$('#forgot-btn').addEventListener('click', async () => {
+  const email = $('#login-form').email.value.trim();
+  if (!email) return authMsg('Scrivi prima la tua email qui sopra, poi premi di nuovo.', true);
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: BASE_URL });
+  authMsg(error ? errText(error) : `Ti abbiamo mandato un'email a ${email} per scegliere una nuova password.`, error ? true : 'ok');
+});
+
+let recovering = false;
+$('#recovery-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  if (f.password.value !== f.password2.value) return authMsg('Le due password non coincidono.', true);
+  const { data, error } = await sb.auth.updateUser({ password: f.password.value });
+  if (error) return authMsg(errText(error), true);
+  recovering = false;
+  f.reset();
+  toast('Password aggiornata');
+  if (data.user) startApp(data.user);
 });
 $('#logout-btn').addEventListener('click', () => { closeMenus(); sb.auth.signOut(); });
 
 sb.auth.onAuthStateChange((event, session) => {
   setTimeout(() => {
+    if (event === 'PASSWORD_RECOVERY') { recovering = true; stopApp(); return showAuth('recovery'); }
+    if (recovering) return;
     if (session?.user) {
       if (state.user?.id !== session.user.id) startApp(session.user);
     } else {
@@ -906,7 +1021,7 @@ async function loadProfile() {
   const av = $('#avatar-btn');
   av.textContent = (data.display_name || '?').trim().charAt(0).toUpperCase();
   av.style.background = data.color;
-  $('#menu-name').textContent = data.display_name;
+  $('#menu-name').innerHTML = `${esc(data.display_name)}<span class="role-tag">${data.role === 'admin' ? 'Amministratore' : 'Dipendente'}</span>`;
   $('#menu-email').textContent = state.user.email || '';
   $('#mine-name').textContent = data.display_name;
   $('#mine-item').style.setProperty('--c', data.color);
@@ -955,7 +1070,9 @@ $('#opt-past').addEventListener('change', (e) => {
 $('#menu-profile').addEventListener('click', () => {
   closeMenus();
   const f = $('#profile-form');
-  f.display_name.value = state.profile.display_name;
+  const p0 = state.profile;
+  f.first_name.value = p0.first_name || (p0.last_name ? '' : p0.display_name);
+  f.last_name.value = p0.last_name || '';
   buildColorPicker($('#profile-colors'), 'pcolor', false);
   if (!PALETTE.includes(state.profile.color)) {
     $('#profile-colors').insertAdjacentHTML('afterbegin', `<label style="background:${state.profile.color}"><input type="radio" name="pcolor" value="${state.profile.color}"></label>`);
@@ -968,7 +1085,8 @@ $('#profile-dialog').addEventListener('close', async () => {
   if ($('#profile-dialog').returnValue !== 'ok') return;
   const f = $('#profile-form');
   const color = $('#profile-colors input:checked')?.value || state.profile.color;
-  const { error } = await sb.from('profiles').update({ display_name: f.display_name.value.trim(), color }).eq('id', state.user.id);
+  const first = f.first_name.value.trim(), last = f.last_name.value.trim();
+  const { error } = await sb.from('profiles').update({ first_name: first, last_name: last, display_name: `${first} ${last}`.trim(), color }).eq('id', state.user.id);
   if (error) return toast(errText(error), true);
   await loadProfile();
   await loadMembers();
@@ -982,6 +1100,14 @@ $('#show-mine').addEventListener('change', (e) => {
 // =====================================================================
 //  GRUPPI (pannello destro)
 // =====================================================================
+// Un solo gruppo di lavoro: chi si registra entra in automatico (vedi SQL 004).
+// Metti false per riattivare crea gruppo / entra con codice / codice invito.
+const SINGLE_GROUP = true;
+if (SINGLE_GROUP) {
+  $('.invite').hidden = true;
+  $('#leave-team').hidden = true;
+  $('.side-actions').hidden = true;
+}
 async function loadTeams() {
   const { data, error } = await sb.from('team_members')
     .select('role, share_events, team:teams(id, name, invite_code)')
@@ -995,6 +1121,10 @@ async function loadTeams() {
   for (const t of state.teams) sel.add(new Option(t.name, t.id, false, t.id === state.teamId));
   $('#no-team').hidden = state.teams.length > 0;
   $('#team-box').hidden = state.teams.length === 0;
+  if (SINGLE_GROUP) {
+    $('#team-select').hidden = state.teams.length <= 1;
+    $('#right .side-head h2').textContent = currentTeam()?.name || 'Gruppo di lavoro';
+  }
   await loadMembers();
 }
 const currentTeam = () => state.teams.find((t) => t.id === state.teamId);
@@ -1004,7 +1134,7 @@ async function loadMembers() {
   state.members = [];
   if (team) {
     const { data, error } = await sb.from('team_members')
-      .select('user_id, role, share_events, profile:profiles(id, display_name, color)')
+      .select('user_id, role, share_events, profile:profiles(id, display_name, color, role)')
       .eq('team_id', team.id);
     if (error) return toast(errText(error), true);
     state.members = data.filter((m) => m.profile);
@@ -1045,11 +1175,11 @@ function renderTeamPanel() {
     const dot = document.createElement('span'); dot.className = 'dot'; dot.style.background = m.profile.color;
     const name = document.createElement('span'); name.className = 'name'; name.textContent = m.profile.display_name + (isMe ? ' (tu)' : '');
     li.append(cb, dot, name);
-    if (m.role === 'owner') li.append(badge('admin'));
+    if (m.role === 'owner' || m.profile.role === 'admin') li.append(badge('admin'));
     if (!m.share_events) li.append(badge('non condivide', 'off'));
-    if (team.role === 'owner' && !isMe) {
+    if (team.role === 'owner' && !isMe && m.role !== 'owner') {
       const x = document.createElement('button');
-      x.className = 'icon-btn sm'; x.title = 'Rimuovi dal gruppo'; x.innerHTML = ic('x');
+      x.className = 'icon-btn sm'; x.title = 'Rimuovi dal gruppo (solo amministratore)'; x.innerHTML = ic('x');
       x.addEventListener('click', () => removeMember(m));
       li.append(x);
     }
