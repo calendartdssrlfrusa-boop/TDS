@@ -244,6 +244,41 @@ input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); m
 .menu button, .menu label { display: flex; width: 100%; align-items: center; gap: .7rem; padding: .6rem 1.1rem; border: 0; background: none; cursor: pointer; font-size: .9rem; color: var(--text); flex-direction: row; }
 .menu button:hover, .menu label:hover { background: var(--hover); }
 
+/* modalità rapida (pannello PC) */
+.quick { height: 100dvh; display: flex; flex-direction: column; background: var(--surface); }
+.q-head { display: flex; align-items: center; gap: .45rem; padding: .45rem .5rem .45rem .8rem; background: var(--bg); border-bottom: 1px solid var(--line-soft); -webkit-app-region: drag; }
+.q-head button { -webkit-app-region: no-drag; }
+.q-head img { width: 24px; height: 24px; }
+.q-head b { font-weight: 600; font-size: .95rem; }
+.q-chat { flex: 1; min-height: 120px; overflow-y: auto; padding: .75rem; display: flex; flex-direction: column; gap: .5rem; }
+.bubble { max-width: 90%; padding: .55rem .8rem; border-radius: 16px; font-size: .88rem; line-height: 1.4; white-space: pre-wrap; word-break: break-word; }
+.bubble.bot { background: var(--bg); align-self: flex-start; border-bottom-left-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.bubble.me { background: var(--accent); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+@media (prefers-color-scheme: dark) { .bubble.me { color: #062e6f; } }
+.bubble.ok { border-left: 3px solid #1e8e3e; }
+.chips { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .5rem; white-space: normal; }
+.chip { border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 999px; padding: .3rem .75rem; font-size: .8rem; cursor: pointer; font: inherit; font-size: .8rem; }
+.chip:hover:not(:disabled) { background: var(--hover); }
+.chip.sel { background: var(--accent-soft); border-color: var(--accent); }
+.chip:disabled { opacity: .5; cursor: default; }
+input.chip { padding: .2rem .5rem; }
+.q-target { display: flex; align-items: center; gap: .4rem; padding: .3rem .5rem .3rem .8rem; font-size: .8rem; background: var(--accent-soft); }
+.q-input { display: flex; gap: .4rem; padding: .5rem .6rem; background: var(--bg); border-top: 1px solid var(--line-soft); align-items: flex-end; }
+.q-input textarea { flex: 1; resize: none; border-radius: 18px; padding: .55rem .9rem; max-height: 110px; font-size: 14px; line-height: 1.35; }
+.q-send { width: 38px; height: 38px; border-radius: 50%; border: 0; background: var(--accent); color: #fff; display: grid; place-items: center; cursor: pointer; flex: none; }
+.q-send .ico { width: 18px; height: 18px; }
+.q-cal { background: var(--bg); border-top: 1px solid var(--line); padding: .5rem .75rem .6rem; display: flex; flex-direction: column; gap: .35rem; }
+.q-cal .mini-grid button { position: relative; width: 26px; height: 26px; }
+.q-cal .mini-grid button.has::after { content: ""; position: absolute; left: 50%; bottom: 1px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--accent); }
+.q-cal .mini-grid button.today.has::after { background: #fff; }
+.q-cal .mini-grid button.sel:not(.today) { box-shadow: inset 0 0 0 2px var(--accent); }
+.q-day-h { font-size: .8rem; font-weight: 600; margin: .15rem 0 0; display: flex; align-items: center; justify-content: space-between; }
+#q-day { max-height: 140px; overflow-y: auto; }
+.q-row { display: grid; grid-template-columns: 92px 1fr; gap: .4rem; font-size: .82rem; padding: .25rem .3rem; border-radius: 6px; }
+.q-row:hover { background: var(--hover); }
+.q-row .t { font-variant-numeric: tabular-nums; color: var(--muted); }
+.q-row .dot { width: 8px; height: 8px; margin-right: .35rem; vertical-align: 1px; }
+
 /* bacheca */
 .icon-btn.active { background: var(--accent-soft); color: var(--accent); }
 #board { position: absolute; inset: 0; overflow: auto; background: var(--bg); z-index: 4; padding: 1.25rem 1.5rem 2rem; }
@@ -478,6 +513,28 @@ dialog::backdrop { background: rgba(0,0,0,.35); }
   </div>
 </section>
 
+<!-- ============================ MODALITÀ RAPIDA (#rapido) ============================ -->
+<section id="quick-view" class="quick" hidden>
+  <header class="q-head">
+    <img id="logo-quick" alt=""> <b>Promemoria rapido</b> <span class="spacer"></span>
+    <button class="icon-btn sm" id="q-full" title="Nuovo impegno completo (pagina intera)" data-ico="plus"></button>
+    <button class="icon-btn sm" id="q-open" title="Apri il calendario completo" data-ico="external"></button>
+    <button class="icon-btn sm" id="q-close" title="Chiudi (Esc)" data-ico="x" hidden></button>
+  </header>
+  <div class="q-chat" id="q-chat"></div>
+  <div class="q-target" id="q-target" hidden><span data-ico="clock"></span><span id="q-target-text" style="flex:1"></span>
+    <button class="icon-btn sm" id="q-target-x" title="Togli la data" data-ico="x"></button></div>
+  <form class="q-input" id="q-form">
+    <textarea id="q-text" rows="1" placeholder="Es. domani alle 10 chiamare Mario, ritirare pacco" autocomplete="off"></textarea>
+    <button class="q-send" type="submit" title="Invia (Invio)" data-ico="send"></button>
+  </form>
+  <div class="q-cal">
+    <div class="mini" id="q-mini"></div>
+    <div class="q-day-h"><span id="q-day-title"></span></div>
+    <div id="q-day"></div>
+  </div>
+</section>
+
 <!-- ============================ DIALOG IMPEGNO ============================ -->
 <dialog id="event-dialog">
   <form id="event-form" class="stack">
@@ -589,6 +646,12 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
 });
 
+// modalità: pagina normale, oppure pannello rapido (#rapido) aperto dal programma PC
+const QUICK = /^#rapido/i.test(location.hash);
+const DESKTOP = window.chrome?.webview || null;   // presente solo dentro il programma PC
+const BASE_URL = location.origin + location.pathname;
+if (QUICK) document.title = 'Renko · Rapido';
+
 // =====================================================================
 //  UTILITÀ
 // =====================================================================
@@ -617,13 +680,15 @@ const ICONS = {
   repeat: '<path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>',
   palette: '<circle cx="12" cy="12" r="9"/><circle cx="8" cy="10" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16" cy="10" r="1.2"/><path d="M12 21a3 3 0 0 1 0-6h2"/>',
   board: '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+  send: '<path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4Z"/>',
+  external: '<path d="M15 3h6v6M10 14 21 3M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/>',
   logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
 };
 const ic = (name, cls = 'ico') => `<svg class="${cls}" viewBox="0 0 24 24">${ICONS[name] || ''}</svg>`;
 const paintIcons = (root = document) => $$('[data-ico]', root).forEach((el) => { el.insertAdjacentHTML('afterbegin', ic(el.dataset.ico)); el.removeAttribute('data-ico'); });
 
 const LOGO = $('link[rel=icon]').href;
-$('#logo-auth').src = LOGO; $('#logo-app').src = LOGO;
+$('#logo-auth').src = LOGO; $('#logo-app').src = LOGO; $('#logo-quick').src = LOGO;
 
 const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -716,6 +781,7 @@ const state = {
 // =====================================================================
 function showAuth() {
   $('#app-view').hidden = true;
+  $('#quick-view').hidden = true;
   $('#auth-view').hidden = false;
   authMsg('');
 }
@@ -748,6 +814,7 @@ sb.auth.onAuthStateChange((event, session) => {
 //  AVVIO APP
 // =====================================================================
 async function startApp(user) {
+  if (QUICK) return startQuick(user);
   state.user = user;
   $('#auth-view').hidden = true;
   $('#app-view').hidden = false;
@@ -763,8 +830,22 @@ async function startApp(user) {
   setBoard(state.board);
   updateNotifyLabel();
   checkReminders();
+  openFromHash();
+}
+
+// apertura da link esterno: #nuovo oppure #nuovo=2026-11-26
+function openFromHash() {
+  const m = location.hash.match(/^#nuovo(?:=(\d{4}-\d{2}-\d{2}))?/);
+  if (!m) return;
+  history.replaceState(null, '', location.pathname + location.search);
+  if (m[1]) {
+    const d = new Date(m[1] + 'T09:00');
+    state.calendar.gotoDate(d);
+    openEventDialog(null, { start: d, end: addMin(d, 60), allDay: false });
+  } else openEventDialog(null, null);
 }
 function stopApp() {
+  $('#quick-view').hidden = true;
   state.user = null;
   state.profile = null;
   if (state.channel) sb.removeChannel(state.channel);
@@ -1552,6 +1633,367 @@ $('#create-btn').addEventListener('click', () => openEventDialog(null, null));
 $('#fab').addEventListener('click', () => openEventDialog(null, null));
 
 // =====================================================================
+//  MODALITÀ RAPIDA (pannello laterale del programma PC: index.html#rapido)
+// =====================================================================
+const q = { target: null, month: new Date(), selected: new Date(), pending: null, days: new Map() };
+const WEEKDAYS = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato'];
+const NUMWORDS = { un: 1, uno: 1, una: 1, due: 2, tre: 3, quattro: 4, cinque: 5, sei: 6, sette: 7, otto: 8, nove: 9, dieci: 10 };
+const MONTH_KEYS = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic'];
+const F_CHIP = fmt({ weekday: 'short', day: 'numeric', month: 'short' });
+const sod = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+const END = '(?=$|[\\s,.;:!?])';
+
+async function startQuick(user) {
+  state.user = user;
+  document.title = 'Renko · Rapido';
+  $('#auth-view').hidden = true;
+  $('#app-view').hidden = true;
+  $('#quick-view').hidden = false;
+  $('#q-close').hidden = !DESKTOP;
+  await loadProfile();
+  subscribeRealtime();
+  q.selected = sod(new Date());
+  q.month = new Date();
+  await qLoad();
+  if (!$('#q-chat').children.length) {
+    addMsg('bot', `Ciao ${state.profile?.display_name || ''}! Scrivimi cosa devi fare, per esempio:\n• domani alle 10 chiamare Mario, ritirare il pacco\n• giovedì riunione dalle 15 alle 16\n• il 12/12 scadenza F24\n\nPuoi anche cliccare un giorno nel calendario qui sotto e poi scrivere.`);
+  }
+  checkReminders();
+  setTimeout(() => $('#q-text').focus(), 50);
+}
+
+function addMsg(who, text, cls = '') {
+  const b = document.createElement('div');
+  b.className = `bubble ${who} ${cls}`;
+  b.textContent = text;
+  $('#q-chat').append(b);
+  $('#q-chat').scrollTop = 1e9;
+  return b;
+}
+
+function dayPhrase(d) {
+  const t = sod(new Date()), x = sod(d);
+  const diff = Math.round((x - t) / 86400000);
+  const base = F_DAYLONG.format(x);
+  if (diff === 0) return `oggi, ${base}`;
+  if (diff === 1) return `domani, ${base}`;
+  if (diff === 2) return `dopodomani, ${base}`;
+  return base;
+}
+
+function nextWeekdays(wd, n = 3) {
+  const out = [];
+  let d = addDays(sod(new Date()), 1);
+  while (out.length < n) { if (d.getDay() === wd) out.push(new Date(d)); d = addDays(d, 1); }
+  return out;
+}
+
+// ---- riconoscimento della data in un pezzo di testo
+function parseDateSpec(text) {
+  let t = text;
+  const today = sod(new Date());
+  const take = (re, fn) => {
+    const m = t.match(re);
+    if (!m) return null;
+    const v = fn(m);
+    if (!v) return null;
+    t = t.slice(0, m.index) + ' ' + t.slice(m.index + m[0].length);
+    return v;
+  };
+  const tries = [
+    () => take(new RegExp('\\b(?:per\\s+)?dopodomani' + END, 'i'), () => ({ date: addDays(today, 2) })),
+    () => take(new RegExp('\\b(?:per\\s+|da\\s+)?domani(?:\\s+mattina|\\s+pomeriggio|\\s+sera)?' + END, 'i'), () => ({ date: addDays(today, 1) })),
+    () => take(new RegExp('\\b(?:per\\s+)?(?:oggi(?:\\s+pomeriggio)?|stamattina|stamani|stasera|stanotte)' + END, 'i'), () => ({ date: today })),
+    () => take(/\b(?:tra|fra)\s+(\d+|un[oa]?|due|tre|quattro|cinque|sei|sette|otto|nove|dieci)\s+(giorn[oi]|settiman[ae]|mes[ei])\b/i, (m) => {
+      const n = /^\d+$/.test(m[1]) ? +m[1] : NUMWORDS[m[1].toLowerCase()];
+      const u = m[2][0].toLowerCase();
+      if (u === 'g') return { date: addDays(today, n) };
+      if (u === 's') return { date: addDays(today, 7 * n) };
+      const d = new Date(today); d.setMonth(d.getMonth() + n); return { date: d };
+    }),
+    () => take(/\b(?:il\s+|per\s+il\s+|entro\s+il\s+)?(\d{1,2})[\/-](\d{1,2})(?:[\/-](\d{2,4}))?\b/, (m) => {
+      let y = m[3] ? +m[3] : today.getFullYear();
+      if (y < 100) y += 2000;
+      const d = new Date(y, +m[2] - 1, +m[1]);
+      if (d.getDate() !== +m[1] || d.getMonth() !== +m[2] - 1) return null;
+      if (!m[3] && d < today) d.setFullYear(y + 1);
+      return { date: d };
+    }),
+    () => take(/\b(?:il\s+|per\s+il\s+|entro\s+il\s+)?(\d{1,2})\s+(gen(?:naio)?|feb(?:braio)?|mar(?:zo)?|apr(?:ile)?|mag(?:gio)?|giu(?:gno)?|lug(?:lio)?|ago(?:sto)?|set(?:tembre)?|ott(?:obre)?|nov(?:embre)?|dic(?:embre)?)\b(?:\s+(\d{4}))?/i, (m) => {
+      const mo = MONTH_KEYS.indexOf(m[2].slice(0, 3).toLowerCase());
+      const y = m[3] ? +m[3] : today.getFullYear();
+      const d = new Date(y, mo, +m[1]);
+      if (d.getMonth() !== mo) return null;
+      if (!m[3] && d < today) d.setFullYear(y + 1);
+      return { date: d };
+    }),
+    () => take(new RegExp('\\b(?:(?:il|di|per|questo|questa|prossimo|prossima|entro)\\s+)?(luned[iì]|marted[iì]|mercoled[iì]|gioved[iì]|venerd[iì]|sabato|domenica)' + END + '(?:\\s+prossim[oa]\\b)?', 'i'), (m) => {
+      const k = m[1].toLowerCase().slice(0, 3);
+      return { weekday: ['dom', 'lun', 'mar', 'mer', 'gio', 'ven', 'sab'].indexOf(k) };
+    }),
+    () => take(/\b(?:il|per il|entro il)\s+(?:giorno\s+)?(\d{1,2})\b(?![:.\/]\d)/i, (m) => {
+      const n = +m[1];
+      if (n < 1 || n > 31) return null;
+      let d = new Date(today.getFullYear(), today.getMonth(), n);
+      if (d < today) d = new Date(today.getFullYear(), today.getMonth() + 1, n);
+      if (d.getDate() !== n) return null;
+      return { date: d };
+    }),
+  ];
+  for (const f of tries) { const v = f(); if (v) return { spec: v, rest: t }; }
+  return { spec: null, rest: text };
+}
+
+// ---- riconoscimento dell'orario
+function parseTime(text) {
+  let t = text, start = null, end = null;
+  const hm = (h, mi) => (h >= 0 && h < 24 && mi >= 0 && mi < 60 ? [h, mi] : null);
+  const cut = (m) => { t = t.slice(0, m.index) + ' ' + t.slice(m.index + m[0].length); };
+  let m = t.match(/\b(?:dalle(?:\s+ore)?|dall['’])\s*(\d{1,2})(?:[:.](\d{2}))?\s*(?:alle|all['’]|-|a)\s*(\d{1,2})(?:[:.](\d{2}))?\b/i)
+       || t.match(/\b(\d{1,2})[:.](\d{2})\s*[-–]\s*(\d{1,2})[:.](\d{2})\b/);
+  if (m) {
+    start = hm(+m[1], +(m[2] || 0)); end = hm(+m[3], +(m[4] || 0));
+    if (start && end) cut(m); else start = end = null;
+  }
+  if (!start) {
+    m = t.match(/\b(?:alle(?:\s+ore)?|all['’]|ore|verso\s+le|per\s+le|h)\s*(\d{1,2})(?:[:.](\d{2}))?\b/i) || t.match(/\b(\d{1,2})[:.](\d{2})\b/);
+    if (m) { start = hm(+m[1], +(m[2] || 0)); if (start) cut(m); }
+  }
+  if (!start && /\bmezzogiorno\b/i.test(t)) { start = [12, 0]; t = t.replace(/\b(?:a\s+)?mezzogiorno\b/i, ' '); }
+  // "alle 3" in orario di lavoro = 15:00
+  const pm = (x) => (x && x[0] >= 1 && x[0] <= 7 ? [x[0] + 12, x[1]] : x);
+  start = pm(start); end = pm(end);
+  return { start, end, rest: t };
+}
+
+function cleanTitle(s) {
+  s = s.replace(/\b(?:ricordami|ricordarmi|ricorda|devo|dobbiamo|bisogna|promemoria|aggiungi|segnami|segna|metti)\b\s*(?:di|che)?/gi, ' ');
+  s = s.replace(/\s+/g, ' ').replace(/^[\s,.;:–\-]+|[\s,.;:–\-]+$/g, '').trim();
+  s = s.replace(/^(?:di|da|che|per|e|a)\s+/i, '').trim();
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+}
+
+// ---- domanda con scelte (chip)
+function askChoice(text, options, withDate) {
+  return new Promise((resolve) => {
+    const b = addMsg('bot', text);
+    const box = document.createElement('div');
+    box.className = 'chips';
+    let closed = false;
+    const done = (v) => {
+      if (closed) return;
+      closed = true;
+      $$('button, input', box).forEach((x) => (x.disabled = true));
+      if (q.pending?.done === done) q.pending = null;
+      resolve(v);
+    };
+    for (const o of options) {
+      const c = document.createElement('button');
+      c.type = 'button'; c.className = 'chip'; c.textContent = o.label;
+      c.onclick = () => { c.classList.add('sel'); done(o.value); };
+      box.append(c);
+    }
+    if (withDate) {
+      const inp = document.createElement('input');
+      inp.type = 'date'; inp.className = 'chip'; inp.title = 'Scegli un giorno';
+      inp.onchange = () => { if (inp.value) done(new Date(inp.value + 'T00:00')); };
+      box.append(inp);
+    }
+    const x = document.createElement('button');
+    x.type = 'button'; x.className = 'chip'; x.textContent = 'Annulla';
+    x.onclick = () => { done(null); addMsg('bot', 'Ok, lascio stare.'); };
+    box.append(x);
+    b.append(box);
+    $('#q-chat').scrollTop = 1e9;
+    q.pending = { done };
+  });
+}
+
+function setTarget(d) {
+  q.target = d ? sod(d) : null;
+  $('#q-target').hidden = !q.target;
+  if (q.target) $('#q-target-text').textContent = 'Aggiungo per ' + dayPhrase(q.target);
+}
+$('#q-target-x').addEventListener('click', () => setTarget(null));
+
+async function handleMessage(text) {
+  addMsg('me', text);
+  if (q.pending) q.pending.done(null);
+
+  // più cose separate da virgola, punto e virgola, a capo o "poi"
+  const parts = text.split(/\s*(?:[,;\n]+|\s+poi\s+)\s*/i).map((x) => x.trim()).filter(Boolean);
+  const groups = [];
+  let cur = null;
+  for (const part of parts) {
+    const { spec, rest } = parseDateSpec(part);
+    if (spec || !cur) { cur = { spec, items: [] }; groups.push(cur); }
+    const tm = parseTime(rest);
+    const title = cleanTitle(tm.rest);
+    if (title) cur.items.push({ title, start: tm.start, end: tm.end });
+    else if (tm.start) cur.items.push({ title: 'Promemoria', start: tm.start, end: tm.end });
+  }
+
+  for (const g of groups) {
+    let date = g.spec?.date || null;
+    if (g.spec && g.spec.weekday != null) {
+      const opts = nextWeekdays(g.spec.weekday).map((d) => ({ label: cap(F_CHIP.format(d).replace('.', '')), value: d }));
+      date = await askChoice(`Quale ${WEEKDAYS[g.spec.weekday]}?`, opts, false);
+      if (!date) return;
+    }
+    if (!date && q.target) date = q.target;
+    if (!date) {
+      if (!g.items.length) continue;
+      const t0 = sod(new Date());
+      date = await askChoice('Per quando?', [
+        { label: 'Oggi', value: t0 }, { label: 'Domani', value: addDays(t0, 1) }, { label: 'Dopodomani', value: addDays(t0, 2) },
+      ], true);
+      if (!date) return;
+    }
+    if (!g.items.length) {
+      setTarget(date);
+      selectDay(date);
+      addMsg('bot', `Ok, ${dayPhrase(date)}. Cosa aggiungo?`);
+      continue;
+    }
+    await createItems(date, g.items);
+  }
+}
+
+async function createItems(date, items) {
+  const d0 = sod(date);
+  const rows = items.map((it) => {
+    if (it.start) {
+      const s = new Date(d0); s.setHours(it.start[0], it.start[1], 0, 0);
+      let e = null;
+      if (it.end) { e = new Date(d0); e.setHours(it.end[0], it.end[1], 0, 0); }
+      if (!e || e <= s) e = addMin(s, 60);
+      return { title: it.title, start_at: s.toISOString(), end_at: e.toISOString(), all_day: false };
+    }
+    return { title: it.title, start_at: d0.toISOString(), end_at: addDays(d0, 1).toISOString(), all_day: true };
+  });
+  const { data, error } = await sb.from('events').insert(rows).select('id');
+  if (error) { addMsg('bot', 'Non sono riuscito a salvare: ' + errText(error)); return; }
+  const lines = rows.map((r) => `• ${r.all_day ? '' : timeStr(new Date(r.start_at)) + ' '}${r.title}`).join('\n');
+  const b = addMsg('bot', `✓ ${rows.length > 1 ? 'Aggiunti' : 'Aggiunto'} per ${dayPhrase(d0)}:\n${lines}`, 'ok');
+  const box = document.createElement('div');
+  box.className = 'chips';
+  const undo = document.createElement('button');
+  undo.type = 'button'; undo.className = 'chip'; undo.textContent = 'Annulla';
+  undo.onclick = async () => {
+    undo.disabled = true;
+    const ids = (data || []).map((x) => x.id);
+    if (!ids.length) return;
+    const { error: e2 } = await sb.from('events').delete().in('id', ids);
+    addMsg('bot', e2 ? 'Non sono riuscito ad annullare: ' + errText(e2) : 'Annullato.');
+    qLoad();
+  };
+  box.append(undo);
+  b.append(box);
+  selectDay(d0);
+}
+
+function selectDay(d) {
+  q.selected = sod(d);
+  const changed = d.getMonth() !== q.month.getMonth() || d.getFullYear() !== q.month.getFullYear();
+  q.month = new Date(d);
+  if (changed) qLoad(); else { qLoad(); }
+}
+
+// ---- calendario sotto la chat
+async function qLoad() {
+  if (!state.user || !QUICK) return;
+  const m = new Date(q.month.getFullYear(), q.month.getMonth(), 1);
+  const gs = addDays(m, -((m.getDay() + 6) % 7)), ge = addDays(gs, 42);
+  const { data, error } = await queryEvents(gs, ge, (x) => x.eq('owner_id', state.user.id));
+  if (error) return toast(errText(error), true);
+  q.days = new Map();
+  for (const ev of data) {
+    for (const o of occurrences(ev, gs, ge)) {
+      // un impegno di più giorni compare in ogni giorno
+      let d = sod(o.start);
+      const last = ev.all_day ? addDays(o.end, -1) : o.end;
+      while (d <= last && d < ge) {
+        if (d >= gs) {
+          const k = dateStr(d);
+          if (!q.days.has(k)) q.days.set(k, []);
+          q.days.get(k).push({ ev, start: o.start, end: o.end });
+        }
+        d = addDays(d, 1);
+      }
+    }
+  }
+  qRender();
+}
+
+function qRender() {
+  const box = $('#q-mini');
+  const m = new Date(q.month.getFullYear(), q.month.getMonth(), 1);
+  const start = addDays(m, -((m.getDay() + 6) % 7));
+  const today = new Date();
+  let html = `<div class="mini-head"><span>${F_MONTH.format(m)}</span><span>
+    <button class="icon-btn sm" data-mm="-1" title="Mese precedente">${ic('left')}</button>
+    <button class="icon-btn sm" data-mm="1" title="Mese successivo">${ic('right')}</button></span></div><div class="mini-grid">`;
+  html += ['L', 'M', 'M', 'G', 'V', 'S', 'D'].map((d) => `<span class="wd">${d}</span>`).join('');
+  for (let i = 0; i < 42; i++) {
+    const d = addDays(start, i);
+    const cls = [];
+    if (d.getMonth() !== m.getMonth()) cls.push('other');
+    if (sameDay(d, today)) cls.push('today');
+    if (sameDay(d, q.selected)) cls.push('sel');
+    if (q.days.has(dateStr(d))) cls.push('has');
+    html += `<button type="button" class="${cls.join(' ')}" data-d="${dateStr(d)}">${d.getDate()}</button>`;
+  }
+  box.innerHTML = html + '</div>';
+  $$('[data-mm]', box).forEach((b) => b.addEventListener('click', () => {
+    q.month = new Date(m.getFullYear(), m.getMonth() + Number(b.dataset.mm), 1);
+    qLoad();
+  }));
+  $$('[data-d]', box).forEach((b) => b.addEventListener('click', () => {
+    const d = new Date(b.dataset.d + 'T00:00');
+    q.selected = d;
+    setTarget(d);
+    if (d.getMonth() !== q.month.getMonth()) { q.month = new Date(d); qLoad(); } else qRender();
+    $('#q-text').focus();
+  }));
+
+  // impegni del giorno selezionato
+  $('#q-day-title').textContent = cap(dayPhrase(q.selected));
+  const list = (q.days.get(dateStr(q.selected)) || []).sort((a, b) => (b.ev.all_day - a.ev.all_day) || (a.start - b.start));
+  $('#q-day').innerHTML = list.length ? list.map((it) => {
+    const color = it.ev.color || state.profile?.color || '#616161';
+    const t = it.ev.all_day ? 'Tutto il giorno' : `${timeStr(it.start)} – ${timeStr(it.end)}`;
+    return `<div class="q-row"><span class="t">${t}</span><span><span class="dot" style="background:${color}"></span>${esc(it.ev.title)}</span></div>`;
+  }).join('') : '<p class="muted small" style="margin:.2rem .3rem">Nessun impegno</p>';
+}
+
+// ---- comandi
+$('#q-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const ta = $('#q-text');
+  const text = ta.value.trim();
+  if (!text) return;
+  ta.value = '';
+  ta.style.height = '';
+  handleMessage(text);
+});
+$('#q-text').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#q-form').requestSubmit(); }
+});
+$('#q-text').addEventListener('input', (e) => {
+  e.target.style.height = 'auto';
+  e.target.style.height = Math.min(110, e.target.scrollHeight) + 'px';
+});
+$('#q-full').addEventListener('click', () => {
+  const d = q.target || q.selected || new Date();
+  window.open(`${BASE_URL}#nuovo=${dateStr(d)}`, '_blank');
+});
+$('#q-open').addEventListener('click', () => window.open(BASE_URL, '_blank'));
+$('#q-close').addEventListener('click', () => DESKTOP?.postMessage(JSON.stringify({ type: 'close' })));
+document.addEventListener('keydown', (e) => {
+  if (QUICK && e.key === 'Escape' && DESKTOP) DESKTOP.postMessage(JSON.stringify({ type: 'close' }));
+});
+
+// =====================================================================
 //  BACHECA OPERATORI (post-it: oggi + domani per ogni persona)
 // =====================================================================
 function setBoard(on) {
@@ -1744,7 +2186,8 @@ async function checkReminders() {
       if (now >= at && now - at < 15 * 60000 && !fired[key]) {
         fired[key] = Date.now();
         const body = ev.all_day ? 'Tutto il giorno' : `${timeStr(o.start)} – ${timeStr(o.end)}${ev.location ? ' · ' + ev.location : ''}`;
-        if ('Notification' in window && Notification.permission === 'granted') {
+        if (DESKTOP) { DESKTOP.postMessage(JSON.stringify({ type: 'notify', title: ev.title, body })); }
+        else if ('Notification' in window && Notification.permission === 'granted') {
           try { new Notification(ev.title, { body, tag: key, icon: LOGO }); } catch {}
         }
         toast(`🔔 ${ev.title} — ${body}`);
@@ -1762,7 +2205,7 @@ setInterval(checkReminders, 30000);
 function subscribeRealtime() {
   if (state.channel) sb.removeChannel(state.channel);
   let t, tm;
-  const refetch = () => { clearTimeout(t); t = setTimeout(() => { state.calendar?.refetchEvents(); if (state.board) renderBoard(); }, 300); };
+  const refetch = () => { clearTimeout(t); t = setTimeout(() => { state.calendar?.refetchEvents(); if (state.board) renderBoard(); if (QUICK) qLoad(); }, 300); };
   const reloadTeams = () => { clearTimeout(tm); tm = setTimeout(loadTeams, 300); };
   state.channel = sb.channel('rc-live')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, refetch)
