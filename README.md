@@ -37,16 +37,25 @@ git remote add origin https://github.com/<tuo-utente>/renko-calendar.git
 git push -u origin main
 ```
 
-## 3. Cloudflare Pages
+## 3. Cloudflare (Workers & Pages)
 
-1. Workers & Pages → Create → Pages → **Connect to Git** → scegli il repo.
-2. Framework preset: **Vite** (oppure: build command `npm run build`, output `dist`).
-3. **Environment variables** (Production e Preview):
-   - `VITE_SUPABASE_URL` = Project URL
-   - `VITE_SUPABASE_ANON_KEY` = anon key
-   - `VITE_ACCESSO_LIBERO` = `1` → per ora: si entra senza iscrizione (utente ospite).
-     Quando vuoi gli accessi veri cancellala e rifai il deploy.
-4. Deploy. Ottieni un indirizzo tipo `renko-calendar.pages.dev` (puoi collegare un tuo dominio).
+Il repository contiene `wrangler.jsonc`: Cloudflare pubblica la cartella `dist` come sito.
+
+Nel progetto Cloudflare → Settings → **Build**:
+- **Build command**: `npm run build`
+- **Deploy command**: `npx wrangler deploy`
+- **Root directory**: `/`
+- **Build variables** (attenzione: quelle di *build*, non le Variables del Worker):
+  - `VITE_SUPABASE_URL` = Project URL
+  - `VITE_SUPABASE_ANON_KEY` = anon key
+  - `VITE_ACCESSO_LIBERO` = `1` → per ora si entra senza iscrizione (utente ospite).
+    Quando vuoi gli accessi veri cancellala e rifai il deploy.
+
+Le variabili `VITE_` vengono scritte nel sito al momento della build: se le cambi,
+serve un nuovo deploy (Deployments → Retry, oppure un push su GitHub).
+
+Se in `wrangler.jsonc` il nome (`"name": "tds"`) è diverso da quello del progetto su
+Cloudflare, allinealo.
 
 ## 4. Torna su Supabase (importante per le email)
 
