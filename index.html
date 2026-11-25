@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1e3a8a" />
+  <title>Renko Calendar</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+</head>
+<body>
+  <!-- ====================== ACCESSO ====================== -->
+  <section id="auth-view" class="auth" hidden>
+    <div class="auth-card">
+      <div class="brand"><img src="/icon.svg" alt="" width="40" height="40" /> Renko Calendar</div>
+
+      <div class="tabs">
+        <button type="button" data-tab="login" class="active">Accedi</button>
+        <button type="button" data-tab="signup">Iscriviti</button>
+      </div>
+
+      <form id="login-form" class="stack">
+        <label>Email <input name="email" type="email" required autocomplete="email" /></label>
+        <label>Password <input name="password" type="password" required autocomplete="current-password" /></label>
+        <button class="btn primary" type="submit">Accedi</button>
+        <button class="link" type="button" id="forgot-btn">Password dimenticata?</button>
+      </form>
+
+      <form id="signup-form" class="stack" hidden>
+        <label>Nome e cognome <input name="name" required maxlength="60" autocomplete="name" /></label>
+        <label>Email <input name="email" type="email" required autocomplete="email" /></label>
+        <label>Password <input name="password" type="password" required minlength="8" autocomplete="new-password" /></label>
+        <button class="btn primary" type="submit">Crea account</button>
+      </form>
+
+      <form id="recovery-form" class="stack" hidden>
+        <p>Scegli la nuova password.</p>
+        <label>Nuova password <input name="password" type="password" required minlength="8" autocomplete="new-password" /></label>
+        <button class="btn primary" type="submit">Salva password</button>
+      </form>
+
+      <p id="auth-msg" class="msg" role="status"></p>
+    </div>
+  </section>
+
+  <!-- ====================== APP ====================== -->
+  <section id="app-view" class="app" hidden>
+    <header class="topbar">
+      <div class="brand"><img src="/icon.svg" alt="" width="28" height="28" /> <span>Renko Calendar</span></div>
+      <div class="topbar-right">
+        <button class="btn ghost" id="profile-btn" title="Il mio profilo"><span class="dot" id="me-dot"></span><span id="me-name"></span></button>
+        <button class="btn ghost icon" id="team-toggle" title="Gruppo" aria-label="Mostra gruppo">👥</button>
+        <button class="btn ghost" id="logout-btn">Esci</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <div id="calendar" class="calendar"></div>
+
+      <aside id="sidebar" class="sidebar">
+        <div class="side-head">
+          <h2>Gruppo di lavoro</h2>
+          <button class="btn ghost icon close-side" id="team-close" aria-label="Chiudi">✕</button>
+        </div>
+
+        <div id="no-team" class="stack" hidden>
+          <p class="muted">Non sei ancora in nessun gruppo. Creane uno o entra con il codice che ti ha dato un collega.</p>
+        </div>
+
+        <div id="team-box" class="stack" hidden>
+          <select id="team-select" aria-label="Gruppo selezionato"></select>
+
+          <div class="invite">
+            <span class="muted">Codice invito</span>
+            <code id="invite-code"></code>
+            <button class="btn small" id="copy-code" type="button">Copia</button>
+            <button class="btn small" id="regen-code" type="button" hidden title="Genera un nuovo codice">↻</button>
+          </div>
+
+          <label class="switch">
+            <input type="checkbox" id="share-toggle" />
+            <span>Rendi visibili i miei impegni a questo gruppo</span>
+          </label>
+
+          <h3>Colleghi</h3>
+          <p class="muted small">Spunta chi vuoi vedere nel tuo calendario.</p>
+          <ul id="member-list" class="members"></ul>
+
+          <button class="link danger" id="leave-team" type="button">Esci da questo gruppo</button>
+        </div>
+
+        <div class="side-actions">
+          <button class="btn" id="create-team" type="button">+ Crea gruppo</button>
+          <button class="btn" id="join-team" type="button">Entra con codice</button>
+        </div>
+      </aside>
+    </main>
+
+    <button class="fab" id="fab" aria-label="Nuovo impegno">+</button>
+  </section>
+
+  <!-- ====================== DIALOG IMPEGNO ====================== -->
+  <dialog id="event-dialog">
+    <form id="event-form" method="dialog" class="stack">
+      <h2 id="event-dialog-title">Nuovo impegno</h2>
+      <p id="event-owner" class="muted" hidden></p>
+
+      <label>Titolo <input name="title" required maxlength="200" /></label>
+      <label class="check"><input type="checkbox" name="all_day" /> Tutto il giorno</label>
+
+      <div class="row">
+        <label>Inizio <input name="start_date" type="date" required /></label>
+        <label class="time">Ora <input name="start_time" type="time" step="300" /></label>
+      </div>
+      <div class="row">
+        <label>Fine <input name="end_date" type="date" required /></label>
+        <label class="time">Ora <input name="end_time" type="time" step="300" /></label>
+      </div>
+
+      <label>Luogo <input name="location" maxlength="200" /></label>
+      <label>Note <textarea name="description" rows="3"></textarea></label>
+      <label class="check"><input type="checkbox" name="is_private" /> Privato (i colleghi non lo vedono)</label>
+
+      <p id="event-msg" class="msg"></p>
+
+      <div class="dialog-actions">
+        <button class="btn danger" type="button" id="event-delete" hidden>Elimina</button>
+        <span class="spacer"></span>
+        <button class="btn" type="button" id="event-cancel">Chiudi</button>
+        <button class="btn primary" type="submit" id="event-save">Salva</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ====================== DIALOG GENERICO (testo) ====================== -->
+  <dialog id="ask-dialog">
+    <form method="dialog" class="stack" id="ask-form">
+      <h2 id="ask-title"></h2>
+      <label><span id="ask-label"></span> <input id="ask-input" required maxlength="60" /></label>
+      <div class="dialog-actions">
+        <span class="spacer"></span>
+        <button class="btn" value="cancel" formnovalidate>Annulla</button>
+        <button class="btn primary" value="ok">OK</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ====================== DIALOG PROFILO ====================== -->
+  <dialog id="profile-dialog">
+    <form method="dialog" class="stack" id="profile-form">
+      <h2>Il mio profilo</h2>
+      <label>Nome visualizzato <input name="display_name" required maxlength="60" /></label>
+      <label>Colore dei miei impegni <input name="color" type="color" /></label>
+      <p class="muted small" id="profile-email"></p>
+      <div class="dialog-actions">
+        <span class="spacer"></span>
+        <button class="btn" value="cancel" formnovalidate>Annulla</button>
+        <button class="btn primary" value="ok">Salva</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status"></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
