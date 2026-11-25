@@ -1,10 +1,8 @@
 {
-  // Configurazione Cloudflare (Workers con file statici)
-  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "tds",
   "compatibility_date": "2026-11-01",
   "assets": {
-    "directory": "./dist",
+    "directory": ".",
     "not_found_handling": "single-page-application"
   }
 }
