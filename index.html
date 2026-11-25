@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#1e3a8a">
+<meta name="theme-color" content="#ffffff">
 <title>Renko Calendar</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%231e3a8a'/%3E%3Crect x='96' y='128' width='320' height='288' rx='36' fill='white'/%3E%3Crect x='96' y='128' width='320' height='80' rx='36' fill='%2393c5fd'/%3E%3Crect x='96' y='172' width='320' height='36' fill='%2393c5fd'/%3E%3Crect x='160' y='92' width='32' height='72' rx='16' fill='white'/%3E%3Crect x='320' y='92' width='32' height='72' rx='16' fill='white'/%3E%3C/svg%3E">
 
@@ -11,8 +11,8 @@
      Inserisci qui URL e chiave anon/publishable del progetto Supabase
      (Supabase > Project Settings > API). MAI la chiave service_role/secret. -->
 <script>
-const SUPABASE_URL = 'https://jvnxdjpaaokrnvazguye.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_erUBNhKrcVNA6H51rg0sBw_x8Ea4e0X';
+const SUPABASE_URL = 'https://XXXXXXXX.supabase.co';
+const SUPABASE_KEY = 'XXXXXXXX';
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.js"></script>
@@ -20,310 +20,529 @@ const SUPABASE_KEY = 'sb_publishable_erUBNhKrcVNA6H51rg0sBw_x8Ea4e0X';
 
 <style>
 :root {
-  --bg: #f5f7fb;
-  --panel: #ffffff;
-  --text: #0f172a;
-  --muted: #64748b;
-  --line: #e2e8f0;
-  --primary: #1e3a8a;
-  --primary-2: #2563eb;
-  --danger: #dc2626;
-  --radius: 10px;
-  --shadow: 0 8px 30px rgba(15, 23, 42, .12);
-  --fc-border-color: var(--line);
-  --fc-today-bg-color: #eef4ff;
-  --fc-now-indicator-color: var(--danger);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --bg: #ffffff;
+  --surface: #f8fafd;
+  --hover: #eef2f8;
+  --text: #1f1f1f;
+  --muted: #5f6368;
+  --line: #dadce0;
+  --line-soft: #ececec;
+  --accent: #0b57d0;
+  --accent-soft: #d3e3fd;
+  --danger: #d93025;
+  --radius: 12px;
+  --shadow: 0 4px 16px rgba(0,0,0,.12), 0 1px 3px rgba(0,0,0,.08);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.08);
+  --left-w: 256px;
+  --right-w: 300px;
+  --fc-border-color: var(--line-soft);
+  --fc-today-bg-color: transparent;
+  --fc-now-indicator-color: #ea4335;
+  --fc-page-bg-color: var(--bg);
+  --fc-neutral-bg-color: var(--surface);
+  --fc-list-event-hover-bg-color: var(--hover);
+  --fc-highlight-color: rgba(11,87,208,.12);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   color: var(--text);
   background: var(--bg);
 }
-
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0b1120; --panel: #111827; --text: #e5e7eb; --muted: #94a3b8;
-    --line: #1f2937; --fc-today-bg-color: #172554; --fc-page-bg-color: #111827;
-    --fc-neutral-bg-color: #1f2937; --fc-list-event-hover-bg-color: #1f2937;
+    --bg: #131314; --surface: #1e1f20; --hover: #2a2b2d; --text: #e3e3e3; --muted: #9aa0a6;
+    --line: #3c4043; --line-soft: #2d2e30; --accent: #a8c7fa; --accent-soft: #004a77;
+    --fc-highlight-color: rgba(168,199,250,.18);
   }
   input, select, textarea { color-scheme: dark; }
 }
-
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
 [hidden] { display: none !important; }
-h2 { font-size: 1.1rem; margin: 0; }
-h3 { font-size: .95rem; margin: .5rem 0 0; }
+button { font: inherit; color: inherit; }
+h2 { font-size: 1.15rem; font-weight: 500; margin: 0; }
+h3 { font-size: .8rem; font-weight: 600; margin: 0; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
 .muted { color: var(--muted); }
-.small { font-size: .82rem; }
+.small { font-size: .8rem; }
 .stack { display: flex; flex-direction: column; gap: .75rem; }
-.row { display: flex; gap: .75rem; }
-.row > label { flex: 1; }
+.row { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; }
 .spacer { flex: 1; }
+.ico { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 
-label { display: flex; flex-direction: column; gap: .3rem; font-size: .85rem; color: var(--muted); }
-label.check, label.switch { flex-direction: row; align-items: center; gap: .5rem; color: var(--text); }
+label { display: flex; flex-direction: column; gap: .3rem; font-size: .82rem; color: var(--muted); }
+label.check { flex-direction: row; align-items: center; gap: .55rem; color: var(--text); font-size: .9rem; cursor: pointer; }
 input, select, textarea {
-  font: inherit; font-size: 16px; /* evita lo zoom su iPhone */
-  padding: .55rem .7rem; border: 1px solid var(--line); border-radius: 8px;
-  background: var(--panel); color: var(--text);
+  font: inherit; font-size: 15px; padding: .5rem .65rem; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--bg); color: var(--text); min-width: 0;
 }
-input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary-2); outline-offset: -1px; }
-input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--primary-2); }
-input[type=color] { padding: 2px; height: 40px; width: 80px; }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
+input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); margin: 0; }
 
 .btn {
-  font: inherit; font-size: .9rem; cursor: pointer;
-  padding: .5rem .9rem; border-radius: 8px; border: 1px solid var(--line);
-  background: var(--panel); color: var(--text);
-  display: inline-flex; align-items: center; gap: .4rem;
+  cursor: pointer; padding: .5rem 1rem; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--bg); display: inline-flex; align-items: center; gap: .4rem; font-size: .9rem; font-weight: 500;
 }
-.btn:hover { filter: brightness(.97); }
-.btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
-.btn.danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, transparent); }
-.btn.ghost { background: transparent; border-color: transparent; }
-.btn.icon { padding: .4rem .55rem; }
-.btn.small { padding: .25rem .55rem; font-size: .8rem; }
-.btn:disabled { opacity: .5; cursor: default; }
-.link { background: none; border: 0; padding: 0; color: var(--primary-2); cursor: pointer; font: inherit; font-size: .85rem; text-align: left; }
-.link.danger { color: var(--danger); }
-
-.msg { min-height: 1.2em; margin: 0; font-size: .85rem; color: var(--muted); }
-.msg.error, #event-msg { color: var(--danger); }
+.btn:hover { background: var(--hover); }
+.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+@media (prefers-color-scheme: dark) { .btn.primary { color: #062e6f; } }
+.btn.primary:hover { filter: brightness(1.08); background: var(--accent); }
+.btn.text { border-color: transparent; color: var(--accent); background: transparent; }
+.btn.text:hover { background: var(--hover); }
+.btn.danger { color: var(--danger); }
+.btn.small { padding: .25rem .7rem; font-size: .8rem; }
+.icon-btn {
+  cursor: pointer; width: 40px; height: 40px; border-radius: 50%; border: 0; background: transparent;
+  display: inline-grid; place-items: center; color: var(--muted); flex: none;
+}
+.icon-btn:hover { background: var(--hover); color: var(--text); }
+.icon-btn.sm { width: 32px; height: 32px; }
+.icon-btn.sm .ico { width: 18px; height: 18px; }
+.link { background: none; border: 0; padding: 0; color: var(--danger); cursor: pointer; font-size: .85rem; text-align: left; }
 .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; flex: none; }
-.brand { display: flex; align-items: center; gap: .55rem; font-weight: 700; font-size: 1.05rem; }
+.badge { font-size: .7rem; padding: .1rem .45rem; border-radius: 99px; background: var(--surface); color: var(--muted); white-space: nowrap; border: 1px solid var(--line-soft); }
+.badge.off { color: var(--danger); }
+.msg { min-height: 1.1em; margin: 0; font-size: .85rem; color: var(--danger); }
 
-/* ---------- accesso ---------- */
-.auth { min-height: 100%; display: grid; place-items: center; padding: 1.5rem; }
-.auth-card {
-  width: min(400px, 100%); background: var(--panel); border-radius: 16px; box-shadow: var(--shadow);
-  padding: 1.75rem; display: flex; flex-direction: column; gap: 1.1rem;
-}
-.tabs { display: flex; background: var(--bg); border-radius: 8px; padding: 3px; }
-.tabs button { flex: 1; border: 0; background: none; padding: .5rem; border-radius: 6px; font: inherit; cursor: pointer; color: var(--muted); }
-.tabs button.active { background: var(--panel); color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+/* ---------------- accesso ---------------- */
+.auth { min-height: 100%; display: grid; place-items: center; padding: 1.5rem; background: var(--surface); }
+.auth-card { width: min(400px, 100%); background: var(--bg); border-radius: 24px; box-shadow: var(--shadow); padding: 2rem; display: flex; flex-direction: column; gap: 1.1rem; }
+.brand { display: flex; align-items: center; gap: .6rem; font-size: 1.3rem; color: var(--text); white-space: nowrap; }
+.brand img { width: 36px; height: 36px; }
+#auth-msg { color: var(--muted); } #auth-msg.error { color: var(--danger); }
 
-/* ---------- app ---------- */
-.app { height: 100dvh; display: flex; flex-direction: column; }
+/* ---------------- struttura ---------------- */
+.app { height: 100dvh; display: flex; flex-direction: column; background: var(--surface); }
 .topbar {
-  display: flex; align-items: center; justify-content: space-between; gap: .5rem;
-  padding: .5rem 1rem; padding-top: max(.5rem, env(safe-area-inset-top));
-  background: var(--panel); border-bottom: 1px solid var(--line);
+  height: 64px; flex: none; display: flex; align-items: center; gap: .35rem; padding: 0 .75rem;
+  padding-top: env(safe-area-inset-top); background: var(--surface);
 }
-.topbar-right { display: flex; align-items: center; gap: .25rem; }
-#team-toggle { display: none; }
+.topbar .brand { margin-right: 1.5rem; font-size: 1.35rem; }
+#title { font-size: 1.35rem; font-weight: 400; margin: 0 0 0 .5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: capitalize; }
+.search { display: flex; align-items: center; gap: .4rem; background: var(--hover); border-radius: 999px; padding: 0 .4rem 0 .8rem; height: 44px; width: min(360px, 32vw); }
+.search input { border: 0; background: transparent; padding: 0; flex: 1; font-size: 15px; }
+.search input:focus { outline: none; }
+.pill-select { border-radius: 999px; padding: .5rem 2rem .5rem 1rem; font-weight: 500; cursor: pointer; appearance: none;
+  background: var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235f6368' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right .6rem center / 16px; }
+.avatar { width: 34px; height: 34px; border-radius: 50%; border: 0; color: #fff; font-weight: 600; cursor: pointer; margin-left: .35rem; display: grid; place-items: center; font-size: .95rem; }
 
-.layout { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 300px; }
-.calendar { padding: .75rem; min-height: 0; background: var(--panel); }
-.sidebar {
-  border-left: 1px solid var(--line); background: var(--panel);
-  padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem;
+.body { flex: 1; min-height: 0; display: grid; grid-template-columns: var(--left-w) 1fr var(--right-w); transition: grid-template-columns .2s; }
+.body.no-left { grid-template-columns: 0 1fr var(--right-w); }
+.body.no-right { grid-template-columns: var(--left-w) 1fr 0; }
+.body.no-left.no-right { grid-template-columns: 0 1fr 0; }
+.left, .right { overflow: hidden auto; min-width: 0; }
+.left { padding: .5rem .75rem 1rem; display: flex; flex-direction: column; gap: 1.1rem; }
+.main { background: var(--bg); border-radius: 16px 16px 0 0; margin-right: .5rem; min-width: 0; position: relative; display: flex; flex-direction: column; overflow: hidden; }
+.body.no-right .main { margin-right: .75rem; }
+#calendar { flex: 1; min-height: 0; }
+.right { background: var(--bg); border-radius: 16px 0 0 0; padding: 1rem; display: flex; flex-direction: column; gap: 1rem; border-left: 1px solid var(--line-soft); }
+
+.create {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: .7rem; cursor: pointer;
+  padding: 1rem 1.5rem 1rem 1.1rem; border-radius: 16px; border: 0; background: var(--bg); box-shadow: var(--shadow);
+  font-size: .95rem; font-weight: 500; margin-top: .25rem;
 }
+.create:hover { box-shadow: var(--shadow-lg); background: var(--hover); }
+.create .ico { width: 26px; height: 26px; color: var(--accent); stroke-width: 2.4; }
+
+/* mini calendario */
+.mini { user-select: none; }
+.mini-head { display: flex; align-items: center; justify-content: space-between; padding: 0 .1rem .3rem .4rem; }
+.mini-head span { font-size: .9rem; font-weight: 500; text-transform: capitalize; }
+.mini-grid { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: .72rem; row-gap: 2px; }
+.mini-grid .wd { color: var(--muted); font-weight: 500; padding: .25rem 0; }
+.mini-grid button { border: 0; background: none; cursor: pointer; width: 28px; height: 28px; margin: 0 auto; border-radius: 50%; font-size: .74rem; }
+.mini-grid button:hover { background: var(--hover); }
+.mini-grid button.other { color: var(--muted); }
+.mini-grid button.inview { background: var(--accent-soft); }
+.mini-grid button.today { background: var(--accent); color: #fff; font-weight: 600; }
+
+.cal-list { display: flex; flex-direction: column; gap: .15rem; }
+.cal-item { flex-direction: row; display: flex; align-items: center; gap: .65rem; padding: .35rem .4rem; border-radius: 8px; color: var(--text); font-size: .9rem; cursor: pointer; }
+.cal-item:hover { background: var(--hover); }
+.cal-item input { accent-color: var(--c, var(--accent)); }
+.views-mobile { display: none; flex-direction: column; gap: .15rem; }
+.views-mobile button { text-align: left; border: 0; background: none; padding: .6rem .8rem; border-radius: 0 999px 999px 0; cursor: pointer; font-size: .95rem; }
+.views-mobile button.active { background: var(--accent-soft); font-weight: 600; }
+.keys { font-size: .75rem; color: var(--muted); line-height: 1.5; margin-top: auto; }
+.keys kbd { border: 1px solid var(--line); border-radius: 4px; padding: 0 .3rem; font-family: inherit; }
+
+/* pannello gruppo (destra) */
 .side-head { display: flex; align-items: center; justify-content: space-between; }
-.close-side { display: none; }
-.side-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: auto; padding-top: .5rem; border-top: 1px solid var(--line); }
-
-.invite { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; font-size: .85rem; }
-.invite code { font-size: 1rem; font-weight: 700; letter-spacing: .08em; background: var(--bg); padding: .2rem .5rem; border-radius: 6px; }
-
+.invite { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; font-size: .85rem; }
+.invite code { font-size: 1rem; font-weight: 700; letter-spacing: .1em; background: var(--surface); padding: .2rem .55rem; border-radius: 6px; }
 .members { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.members li { display: flex; align-items: center; gap: .5rem; padding: .45rem 0; border-bottom: 1px solid var(--line); font-size: .9rem; }
+.members li { display: flex; align-items: center; gap: .55rem; padding: .45rem .25rem; border-radius: 8px; font-size: .9rem; }
+.members li:hover { background: var(--hover); }
 .members .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.badge { font-size: .7rem; padding: .1rem .4rem; border-radius: 99px; background: var(--bg); color: var(--muted); white-space: nowrap; }
-.badge.off { background: #fef2f2; color: var(--danger); }
+.members input { accent-color: var(--c, var(--accent)); }
+.side-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: auto; padding-top: .75rem; border-top: 1px solid var(--line-soft); }
 
-.fab {
-  position: fixed; right: 1.25rem; bottom: calc(1.25rem + env(safe-area-inset-bottom));
-  width: 56px; height: 56px; border-radius: 50%; border: 0;
-  background: var(--primary); color: #fff; font-size: 1.8rem; line-height: 1;
-  box-shadow: var(--shadow); cursor: pointer; z-index: 5;
+/* ---------------- FullCalendar ---------------- */
+.fc { font-size: .8rem; height: 100%; }
+.fc .fc-scrollgrid { border-left: 0; border-top: 0; }
+.fc-theme-standard td, .fc-theme-standard th { border-color: var(--line-soft); }
+.fc .fc-col-header-cell { border-bottom: 0; }
+.fc .fc-col-header-cell-cushion { padding: .4rem 0 .2rem; color: var(--muted); font-weight: 500; text-decoration: none; }
+.dh { display: flex; flex-direction: column; align-items: center; gap: .15rem; }
+.dh-w { font-size: .7rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.dh-n { font-size: 1.55rem; color: var(--text); width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-weight: 400; cursor: pointer; }
+.dh-n:hover { background: var(--hover); }
+.dh.today .dh-w { color: var(--accent); }
+.dh.today .dh-n { background: var(--accent); color: #fff; }
+@media (prefers-color-scheme: dark) { .dh.today .dh-n { color: #062e6f; } }
+.fc .fc-timegrid-slot { height: 24px; border-bottom: 0; }
+.fc .fc-timegrid-slot-minor { border-top-style: none; }
+.fc .fc-timegrid-slot-label { border: 0; vertical-align: top; }
+.fc .fc-timegrid-slot-label-cushion { font-size: .68rem; color: var(--muted); position: relative; top: -.6em; background: var(--bg); padding-right: .5rem; }
+.fc .fc-timegrid-axis-cushion { font-size: .68rem; color: var(--muted); }
+.fc .fc-timegrid-now-indicator-line { border-width: 2px 0 0; }
+.fc .fc-timegrid-now-indicator-arrow { border: 0; width: 12px; height: 12px; border-radius: 50%; background: var(--fc-now-indicator-color); margin-top: -6px; margin-left: -6px; }
+.fc .fc-daygrid-day-top { justify-content: center; }
+.fc .fc-daygrid-day-number { font-size: .75rem; padding: .3rem; margin-top: .2rem; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; text-decoration: none; color: var(--text); }
+.fc .fc-day-today .fc-daygrid-day-number { background: var(--accent); color: #fff; }
+.fc .fc-day-other .fc-daygrid-day-number { color: var(--muted); }
+.fc .fc-daygrid-day-frame { min-height: 100%; }
+.fc a { color: inherit; }
+.fc .fc-event { border-radius: 6px; border-width: 0; font-size: .76rem; cursor: pointer; }
+.fc .fc-timegrid-event { box-shadow: 0 0 0 1px var(--bg); padding: 1px 4px; }
+.fc .fc-timegrid-event.ev-other { border-left: 4px solid; }
+.fc .fc-h-event { padding: 0 4px; }
+.fc .fc-h-event.ev-other { border-left: 4px solid; }
+.fc .fc-daygrid-dot-event { padding: 1px 4px; }
+.fc .fc-daygrid-dot-event:hover { background: var(--hover); }
+.fc .fc-daygrid-event-dot { border-width: 5px; }
+.fc .ev-past { opacity: .55; }
+.ev { overflow: hidden; line-height: 1.25; height: 100%; }
+.ev-t { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ev-s { opacity: .9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ev-ico { width: 11px; height: 11px; vertical-align: -1px; margin-right: 2px; stroke-width: 2.5; }
+.fc .fc-more-link { font-weight: 600; color: var(--text); }
+.fc .fc-list { border: 0; }
+.fc .fc-list-day-cushion { background: var(--bg); }
+.fc .fc-list-event td { border-color: var(--line-soft); }
+.fc .fc-multimonth { border: 0; }
+.fc .fc-multimonth-title { font-size: .95rem; font-weight: 500; text-transform: capitalize; }
+.fc .fc-highlight { border-radius: 6px; }
+
+/* ---------------- popover ---------------- */
+.popover {
+  position: fixed; z-index: 40; background: var(--bg); border-radius: 20px; box-shadow: var(--shadow-lg);
+  width: min(420px, calc(100vw - 24px)); padding: .6rem 1.25rem 1.25rem;
 }
-@media (min-width: 761px) { .fab { right: calc(300px + 1.5rem); } }
+.pop-tools { display: flex; justify-content: flex-end; gap: .1rem; margin-right: -.6rem; }
+.pop-row { display: flex; gap: 1rem; align-items: flex-start; padding: .35rem 0; font-size: .9rem; line-height: 1.4; }
+.pop-row > .ico, .pop-row > .swatch { margin-top: 2px; color: var(--muted); }
+.pop-row.title { font-size: 1.35rem; line-height: 1.25; }
+.swatch { width: 16px; height: 16px; border-radius: 5px; flex: none; margin: 6px 2px 0; }
+.pop-sub { color: var(--muted); font-size: .85rem; }
+.pop-desc { white-space: pre-wrap; word-break: break-word; }
+#quick-form .title-input { border: 0; border-bottom: 1px solid var(--line); border-radius: 0; font-size: 1.35rem; padding: .4rem 0; width: 100%; }
+#quick-form .title-input:focus { outline: none; border-bottom: 2px solid var(--accent); }
+.pop-actions { display: flex; justify-content: flex-end; gap: .5rem; margin-top: .75rem; }
 
-/* FullCalendar */
-.fc { font-size: .88rem; }
-.fc .fc-toolbar-title { font-size: 1.15rem; text-transform: capitalize; }
-.fc .fc-button-primary { background: var(--panel); color: var(--text); border-color: var(--line); text-transform: capitalize; }
-.fc .fc-button-primary:not(:disabled).fc-button-active,
-.fc .fc-button-primary:not(:disabled):active { background: var(--primary); border-color: var(--primary); color: #fff; }
-.fc .fc-button-primary:disabled { background: var(--bg); color: var(--muted); border-color: var(--line); }
-.fc-event.ev-other { opacity: .78; border-style: dashed; cursor: pointer; }
-.fc-event.ev-mine { cursor: pointer; }
+.menu { position: fixed; z-index: 45; background: var(--bg); border-radius: 16px; box-shadow: var(--shadow-lg); min-width: 260px; padding: .5rem 0; }
+.menu .head { padding: .75rem 1.1rem; border-bottom: 1px solid var(--line-soft); margin-bottom: .35rem; }
+.menu .head b { display: block; font-weight: 500; }
+.menu button, .menu label { display: flex; width: 100%; align-items: center; gap: .7rem; padding: .6rem 1.1rem; border: 0; background: none; cursor: pointer; font-size: .9rem; color: var(--text); flex-direction: row; }
+.menu button:hover, .menu label:hover { background: var(--hover); }
+
+/* ricerca */
+#search-results { position: absolute; inset: 0; background: var(--bg); z-index: 5; overflow: auto; padding: 1rem 1.5rem; }
+.res-head { display: flex; align-items: center; gap: .5rem; margin-bottom: .75rem; }
+.res { display: grid; grid-template-columns: 110px 14px 1fr; gap: .25rem 1rem; align-items: center; padding: .6rem .5rem; border-radius: 10px; cursor: pointer; font-size: .9rem; }
+.res:hover { background: var(--hover); }
+.res .d { color: var(--muted); font-size: .82rem; }
 
 /* dialog */
-dialog {
-  border: 0; border-radius: 14px; padding: 1.4rem; width: min(480px, calc(100% - 1.5rem));
-  background: var(--panel); color: var(--text); box-shadow: var(--shadow);
-}
-dialog::backdrop { background: rgba(15, 23, 42, .45); }
-.dialog-actions { display: flex; gap: .5rem; align-items: center; margin-top: .25rem; }
+dialog { border: 0; border-radius: 24px; padding: 1.5rem; width: min(560px, calc(100% - 1.5rem)); background: var(--bg); color: var(--text); box-shadow: var(--shadow-lg); max-height: calc(100dvh - 2rem); }
+dialog::backdrop { background: rgba(0,0,0,.35); }
+.dialog-actions { display: flex; gap: .5rem; align-items: center; margin-top: .5rem; }
+#event-form .title-input { font-size: 1.4rem; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: .3rem 0; }
+#event-form .title-input:focus { outline: none; border-bottom: 2px solid var(--accent); }
+.field-row { display: grid; grid-template-columns: 24px 1fr; gap: .9rem; align-items: start; }
+.field-row > .ico { margin-top: .55rem; color: var(--muted); }
+.dt { display: grid; grid-template-columns: 1fr auto; gap: .5rem; }
+.colors { display: flex; flex-wrap: wrap; gap: .45rem; padding-top: .3rem; }
+.colors label { width: 26px; height: 26px; border-radius: 50%; cursor: pointer; position: relative; display: block; }
+.colors input { position: absolute; opacity: 0; }
+.colors label:has(input:checked)::after { content: ""; position: absolute; inset: 7px; border-radius: 50%; background: #fff; }
+.colors label.def { border: 2px dashed var(--line); background: transparent !important; }
+.colors label.def span { position: absolute; inset: 4px; border-radius: 50%; }
+.note { font-size: .82rem; color: var(--muted); background: var(--surface); padding: .5rem .75rem; border-radius: 8px; }
 
-.toast {
-  position: fixed; left: 50%; bottom: 1.5rem; transform: translate(-50%, 150%);
-  background: #0f172a; color: #fff; padding: .7rem 1.1rem; border-radius: 10px;
-  font-size: .9rem; transition: transform .25s, opacity .25s; z-index: 50; max-width: calc(100% - 2rem);
-  opacity: 0; pointer-events: none;
+.fab {
+  display: none; position: fixed; right: 1rem; bottom: calc(1.25rem + env(safe-area-inset-bottom)); z-index: 15;
+  width: 56px; height: 56px; border-radius: 16px; border: 0; background: var(--accent-soft); color: var(--text);
+  box-shadow: var(--shadow); cursor: pointer; place-items: center;
 }
-.toast.show { transform: translate(-50%, 0); opacity: 1; }
+.fab .ico { width: 26px; height: 26px; }
+.scrim { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 18; }
+.toast {
+  position: fixed; left: 1.5rem; bottom: 1.5rem; background: #303134; color: #fff; padding: .85rem 1.2rem;
+  border-radius: 8px; font-size: .9rem; z-index: 60; max-width: calc(100% - 3rem);
+  transform: translateY(150%); opacity: 0; transition: transform .25s, opacity .25s; pointer-events: none;
+}
+.toast.show { transform: none; opacity: 1; }
 .toast.error { background: var(--danger); }
 
-/* ---------- telefono ---------- */
-@media (max-width: 760px) {
-  .topbar .brand span, #me-name { display: none; }
-  #team-toggle, .close-side { display: inline-flex; }
-  .layout { grid-template-columns: 1fr; }
-  .calendar { padding: .4rem; }
-  .sidebar {
-    position: fixed; inset: 0 0 0 auto; width: min(340px, 88vw); z-index: 20;
-    transform: translateX(100%); transition: transform .25s; box-shadow: var(--shadow);
-    padding-top: max(1rem, env(safe-area-inset-top));
+@media (min-width: 861px) { #search-btn, #search-close { display: none !important; } }
+
+/* ---------------- telefono ---------------- */
+@media (max-width: 860px) {
+  .topbar { height: 56px; gap: .1rem; padding: 0 .25rem; }
+  .topbar .brand, #view-select, .search, #team-btn-wide { display: none; }
+  .topbar.searching .search { display: flex; width: auto; flex: 1; }
+  .topbar.searching #title, .topbar.searching #today-btn { display: none; }
+  #title { font-size: 1.15rem; margin-left: .15rem; flex: 1; min-width: 0; }
+  .topbar > .spacer { display: none; }
+  .avatar { margin-left: 0; }
+  #prev-btn, #next-btn { display: none; }
+  #today-btn { padding: .3rem .7rem; }
+  .body, .body.no-left, .body.no-right, .body.no-left.no-right { grid-template-columns: 1fr; }
+  .main { margin: 0; border-radius: 0; }
+  .left, .right {
+    position: fixed; top: 0; bottom: 0; z-index: 20; width: min(320px, 86vw); background: var(--bg);
+    transition: transform .25s; padding-top: max(1rem, env(safe-area-inset-top)); box-shadow: var(--shadow-lg); border-radius: 0;
   }
-  .sidebar.open { transform: none; }
-  .fc .fc-toolbar-title { font-size: 1rem; }
-  .fc .fc-toolbar { gap: .4rem; }
-  .fab { bottom: calc(4.2rem + env(safe-area-inset-bottom)); }
-  .fc .fc-footer-toolbar .fc-button { font-size: .8rem; padding: .3rem .5rem; }
+  .left { left: 0; transform: translateX(-105%); }
+  .right { right: 0; transform: translateX(105%); }
+  .left.open, .right.open { transform: none; }
+  .scrim.show { display: block; }
+  .views-mobile { display: flex; }
+  .keys, .left .create { display: none; }
+  .fab { display: grid; }
+  .popover { left: 0 !important; right: 0; bottom: 0; top: auto !important; width: 100%; border-radius: 24px 24px 0 0; padding-bottom: calc(1.25rem + env(safe-area-inset-bottom)); }
+  .dh-n { font-size: 1.2rem; width: 36px; height: 36px; }
+  dialog { width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; margin: 0; }
+  .toast { left: 1rem; right: 1rem; bottom: 5.5rem; max-width: none; }
 }
 </style>
 </head>
 <body>
 
-  <!-- ====================== ACCESSO ====================== -->
-  <section id="auth-view" class="auth" hidden>
-    <div class="auth-card">
-      <div class="brand"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%231e3a8a'/%3E%3Crect x='96' y='128' width='320' height='288' rx='36' fill='white'/%3E%3Crect x='96' y='128' width='320' height='80' rx='36' fill='%2393c5fd'/%3E%3Crect x='96' y='172' width='320' height='36' fill='%2393c5fd'/%3E%3Crect x='160' y='92' width='32' height='72' rx='16' fill='white'/%3E%3Crect x='320' y='92' width='32' height='72' rx='16' fill='white'/%3E%3C/svg%3E" alt="" width="40" height="40" /> Renko Calendar</div>
+<!-- ============================ ACCESSO ============================ -->
+<section id="auth-view" class="auth" hidden>
+  <div class="auth-card">
+    <div class="brand"><img id="logo-auth" alt=""> Renko Calendar</div>
+    <form id="login-form" class="stack">
+      <label>Email <input name="email" type="email" required autocomplete="email"></label>
+      <label>Password <input name="password" type="password" required autocomplete="current-password"></label>
+      <button class="btn primary" type="submit" style="justify-content:center">Accedi</button>
+    </form>
+    <p id="auth-msg" class="msg" role="status"></p>
+  </div>
+</section>
 
-      <form id="login-form" class="stack">
-        <label>Email <input name="email" type="email" required autocomplete="email" /></label>
-        <label>Password <input name="password" type="password" required autocomplete="current-password" /></label>
-        <button class="btn primary" type="submit">Accedi</button>
-      </form>
+<!-- ============================ APP ============================ -->
+<section id="app-view" class="app" hidden>
+  <header class="topbar" id="topbar">
+    <button class="icon-btn" id="menu-btn" title="Menu principale" data-ico="menu"></button>
+    <div class="brand"><img id="logo-app" alt=""> Calendario</div>
+    <button class="btn" id="today-btn" title="Oggi (T)">Oggi</button>
+    <button class="icon-btn" id="prev-btn" title="Precedente (←)" data-ico="left"></button>
+    <button class="icon-btn" id="next-btn" title="Successivo (→)" data-ico="right"></button>
+    <h1 id="title"></h1>
+    <span class="spacer"></span>
+    <form class="search" id="search-form">
+      <span data-ico="search" class="muted"></span>
+      <input id="search-input" placeholder="Cerca impegni" autocomplete="off">
+      <button type="button" class="icon-btn sm" id="search-close" title="Chiudi ricerca" data-ico="x"></button>
+    </form>
+    <button class="icon-btn" id="search-btn" title="Cerca (/)" data-ico="search"></button>
+    <select id="view-select" class="pill-select" aria-label="Vista">
+      <option value="timeGridDay">Giorno</option>
+      <option value="timeGrid3">3 giorni</option>
+      <option value="timeGridWeek">Settimana</option>
+      <option value="dayGridMonth">Mese</option>
+      <option value="multiMonthYear">Anno</option>
+      <option value="listMonth">Programma</option>
+    </select>
+    <button class="icon-btn" id="team-btn" title="Gruppo di lavoro" data-ico="users"></button>
+    <button class="avatar" id="avatar-btn" title="Account"></button>
+  </header>
 
-      <p id="auth-msg" class="msg" role="status"></p>
-    </div>
-  </section>
-
-  <!-- ====================== APP ====================== -->
-  <section id="app-view" class="app" hidden>
-    <header class="topbar">
-      <div class="brand"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%231e3a8a'/%3E%3Crect x='96' y='128' width='320' height='288' rx='36' fill='white'/%3E%3Crect x='96' y='128' width='320' height='80' rx='36' fill='%2393c5fd'/%3E%3Crect x='96' y='172' width='320' height='36' fill='%2393c5fd'/%3E%3Crect x='160' y='92' width='32' height='72' rx='16' fill='white'/%3E%3Crect x='320' y='92' width='32' height='72' rx='16' fill='white'/%3E%3C/svg%3E" alt="" width="28" height="28" /> <span>Renko Calendar</span></div>
-      <div class="topbar-right">
-        <button class="btn ghost" id="profile-btn" title="Il mio profilo"><span class="dot" id="me-dot"></span><span id="me-name"></span></button>
-        <button class="btn ghost icon" id="team-toggle" title="Gruppo" aria-label="Mostra gruppo">👥</button>
-        <button class="btn ghost" id="logout-btn">Esci</button>
+  <div class="body" id="body">
+    <aside class="left" id="left">
+      <button class="create" id="create-btn"><span data-ico="plus"></span> Crea</button>
+      <div class="views-mobile" id="views-mobile"></div>
+      <div class="mini" id="mini"></div>
+      <div class="cal-list">
+        <h3 style="margin:0 0 .3rem .4rem">I miei calendari</h3>
+        <label class="cal-item" id="mine-item"><input type="checkbox" id="show-mine"> <span id="mine-name"></span></label>
       </div>
-    </header>
+      <div class="keys">
+        <b>Scorciatoie</b><br>
+        <kbd>C</kbd> nuovo · <kbd>T</kbd> oggi · <kbd>/</kbd> cerca<br>
+        <kbd>G</kbd> giorno · <kbd>S</kbd> settimana · <kbd>M</kbd> mese · <kbd>A</kbd> anno<br>
+        <kbd>←</kbd> <kbd>→</kbd> sposta · <kbd>Esc</kbd> chiudi
+      </div>
+    </aside>
 
-    <main class="layout">
-      <div id="calendar" class="calendar"></div>
-
-      <aside id="sidebar" class="sidebar">
-        <div class="side-head">
-          <h2>Gruppo di lavoro</h2>
-          <button class="btn ghost icon close-side" id="team-close" aria-label="Chiudi">✕</button>
-        </div>
-
-        <div id="no-team" class="stack" hidden>
-          <p class="muted">Non sei ancora in nessun gruppo. Creane uno o entra con il codice che ti ha dato un collega.</p>
-        </div>
-
-        <div id="team-box" class="stack" hidden>
-          <select id="team-select" aria-label="Gruppo selezionato"></select>
-
-          <div class="invite">
-            <span class="muted">Codice invito</span>
-            <code id="invite-code"></code>
-            <button class="btn small" id="copy-code" type="button">Copia</button>
-            <button class="btn small" id="regen-code" type="button" hidden title="Genera un nuovo codice">↻</button>
-          </div>
-
-          <label class="switch">
-            <input type="checkbox" id="share-toggle" />
-            <span>Rendi visibili i miei impegni a questo gruppo</span>
-          </label>
-
-          <h3>Colleghi</h3>
-          <p class="muted small">Spunta chi vuoi vedere nel tuo calendario.</p>
-          <ul id="member-list" class="members"></ul>
-
-          <button class="link danger" id="leave-team" type="button">Esci da questo gruppo</button>
-        </div>
-
-        <div class="side-actions">
-          <button class="btn" id="create-team" type="button">+ Crea gruppo</button>
-          <button class="btn" id="join-team" type="button">Entra con codice</button>
-        </div>
-      </aside>
+    <main class="main">
+      <div id="calendar"></div>
+      <div id="search-results" hidden></div>
     </main>
 
-    <button class="fab" id="fab" aria-label="Nuovo impegno">+</button>
-  </section>
+    <aside class="right" id="right">
+      <div class="side-head">
+        <h2>Gruppo di lavoro</h2>
+        <button class="icon-btn sm" id="right-close" title="Chiudi" data-ico="x"></button>
+      </div>
+      <p id="no-team" class="muted small" hidden>Non sei ancora in nessun gruppo. Creane uno o entra con il codice di un collega.</p>
+      <div id="team-box" class="stack" hidden>
+        <select id="team-select" aria-label="Gruppo"></select>
+        <div class="invite">
+          <span class="muted">Codice invito</span>
+          <code id="invite-code"></code>
+          <button class="btn small" id="copy-code" type="button">Copia</button>
+          <button class="icon-btn sm" id="regen-code" type="button" hidden title="Nuovo codice" data-ico="repeat"></button>
+        </div>
+        <label class="check"><input type="checkbox" id="share-toggle"> Rendi visibili i miei impegni a questo gruppo</label>
+        <div>
+          <h3>Colleghi</h3>
+          <p class="muted small" style="margin:.3rem 0 .4rem">Spunta chi vuoi vedere nel tuo calendario.</p>
+          <ul id="member-list" class="members"></ul>
+        </div>
+        <button class="link" id="leave-team" type="button">Esci da questo gruppo</button>
+      </div>
+      <div class="side-actions">
+        <button class="btn small" id="create-team" type="button"><span data-ico="plus"></span> Crea gruppo</button>
+        <button class="btn small" id="join-team" type="button">Entra con codice</button>
+      </div>
+    </aside>
+  </div>
 
-  <!-- ====================== DIALOG IMPEGNO ====================== -->
-  <dialog id="event-dialog">
-    <form id="event-form" method="dialog" class="stack">
+  <div class="scrim" id="scrim"></div>
+  <button class="fab" id="fab" title="Nuovo impegno" data-ico="plus"></button>
+
+  <!-- creazione rapida -->
+  <div class="popover" id="quick-pop" hidden>
+    <div class="pop-tools"><button class="icon-btn sm" type="button" id="quick-close" data-ico="x"></button></div>
+    <form id="quick-form" class="stack">
+      <input class="title-input" name="title" placeholder="Aggiungi titolo" maxlength="200" required autocomplete="off">
+      <div class="pop-row"><span data-ico="clock"></span><span id="quick-when"></span></div>
+      <div class="pop-actions">
+        <button type="button" class="btn text" id="quick-more">Altre opzioni</button>
+        <button type="submit" class="btn primary">Salva</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- dettaglio impegno -->
+  <div class="popover" id="detail-pop" hidden></div>
+
+  <!-- menu account -->
+  <div class="menu" id="avatar-menu" hidden>
+    <div class="head"><b id="menu-name"></b><span class="muted small" id="menu-email"></span></div>
+    <button type="button" id="menu-profile"><span data-ico="user"></span> Nome e colore</button>
+    <label><input type="checkbox" id="opt-weekends"> Mostra fine settimana</label>
+    <label><input type="checkbox" id="opt-past"> Attenua impegni passati</label>
+    <button type="button" id="menu-notify"><span data-ico="bell"></span> <span id="notify-label">Attiva notifiche</span></button>
+    <button type="button" id="logout-btn"><span data-ico="logout"></span> Esci</button>
+  </div>
+</section>
+
+<!-- ============================ DIALOG IMPEGNO ============================ -->
+<dialog id="event-dialog">
+  <form id="event-form" class="stack">
+    <div class="row" style="justify-content:space-between">
       <h2 id="event-dialog-title">Nuovo impegno</h2>
-      <p id="event-owner" class="muted" hidden></p>
+      <button type="button" class="icon-btn sm" id="event-x" data-ico="x"></button>
+    </div>
+    <input class="title-input" name="title" placeholder="Aggiungi titolo" required maxlength="200" autocomplete="off">
 
-      <label>Titolo <input name="title" required maxlength="200" /></label>
-      <label class="check"><input type="checkbox" name="all_day" /> Tutto il giorno</label>
-
-      <div class="row">
-        <label>Inizio <input name="start_date" type="date" required /></label>
-        <label class="time">Ora <input name="start_time" type="time" step="300" /></label>
+    <div class="field-row"><span data-ico="clock"></span>
+      <div class="stack" style="gap:.5rem">
+        <div class="dt"><input name="start_date" type="date" required aria-label="Data inizio"><input name="start_time" type="time" step="300" class="time" aria-label="Ora inizio"></div>
+        <div class="dt"><input name="end_date" type="date" required aria-label="Data fine"><input name="end_time" type="time" step="300" class="time" aria-label="Ora fine"></div>
+        <label class="check"><input type="checkbox" name="all_day"> Tutto il giorno</label>
       </div>
-      <div class="row">
-        <label>Fine <input name="end_date" type="date" required /></label>
-        <label class="time">Ora <input name="end_time" type="time" step="300" /></label>
+    </div>
+
+    <div class="field-row"><span data-ico="repeat"></span>
+      <div class="stack" style="gap:.5rem">
+        <select name="repeat_freq" aria-label="Ripetizione"></select>
+        <div class="row" id="repeat-extra" hidden>
+          <span class="muted small">ogni</span>
+          <input name="repeat_interval" type="number" min="1" max="99" value="1" style="width:70px" aria-label="Intervallo">
+          <span class="muted small" id="repeat-unit"></span>
+          <span class="muted small">fino al</span>
+          <input name="repeat_until" type="date" aria-label="Fine ripetizione" style="flex:1;min-width:140px">
+        </div>
       </div>
+    </div>
 
-      <label>Luogo <input name="location" maxlength="200" /></label>
-      <label>Note <textarea name="description" rows="3"></textarea></label>
-      <label class="check"><input type="checkbox" name="is_private" /> Privato (i colleghi non lo vedono)</label>
+    <div class="field-row"><span data-ico="bell"></span>
+      <select name="reminder_minutes" aria-label="Promemoria">
+        <option value="">Nessuna notifica</option>
+        <option value="0">All'inizio</option>
+        <option value="5">5 minuti prima</option>
+        <option value="10">10 minuti prima</option>
+        <option value="15">15 minuti prima</option>
+        <option value="30">30 minuti prima</option>
+        <option value="60">1 ora prima</option>
+        <option value="120">2 ore prima</option>
+        <option value="1440">1 giorno prima</option>
+        <option value="10080">1 settimana prima</option>
+      </select>
+    </div>
 
-      <p id="event-msg" class="msg"></p>
+    <div class="field-row"><span data-ico="pin"></span><input name="location" placeholder="Aggiungi luogo" maxlength="200"></div>
+    <div class="field-row"><span data-ico="text"></span><textarea name="description" rows="3" placeholder="Aggiungi descrizione"></textarea></div>
+    <div class="field-row"><span data-ico="palette"></span><div class="colors" id="color-pick"></div></div>
+    <div class="field-row"><span data-ico="lock"></span><label class="check"><input type="checkbox" name="is_private"> Privato (i colleghi non lo vedono)</label></div>
 
-      <div class="dialog-actions">
-        <button class="btn danger" type="button" id="event-delete" hidden>Elimina</button>
-        <span class="spacer"></span>
-        <button class="btn" type="button" id="event-cancel">Chiudi</button>
-        <button class="btn primary" type="submit" id="event-save">Salva</button>
-      </div>
-    </form>
-  </dialog>
+    <p class="note" id="series-note" hidden>Le modifiche valgono per tutti gli eventi della serie.</p>
+    <p id="event-msg" class="msg"></p>
+    <div class="dialog-actions">
+      <span class="spacer"></span>
+      <button class="btn" type="button" id="event-cancel">Annulla</button>
+      <button class="btn primary" type="submit" id="event-save">Salva</button>
+    </div>
+  </form>
+</dialog>
 
-  <!-- ====================== DIALOG GENERICO (testo) ====================== -->
-  <dialog id="ask-dialog">
-    <form method="dialog" class="stack" id="ask-form">
-      <h2 id="ask-title"></h2>
-      <label><span id="ask-label"></span> <input id="ask-input" required maxlength="60" /></label>
-      <div class="dialog-actions">
-        <span class="spacer"></span>
-        <button class="btn" value="cancel" formnovalidate>Annulla</button>
-        <button class="btn primary" value="ok">OK</button>
-      </div>
-    </form>
-  </dialog>
+<!-- scelta per eventi ricorrenti -->
+<dialog id="series-dialog" style="width:min(380px, calc(100% - 1.5rem));height:auto">
+  <form method="dialog" class="stack">
+    <h2>Elimina evento ricorrente</h2>
+    <label class="check"><input type="radio" name="scope" value="one" checked> Solo questo evento</label>
+    <label class="check"><input type="radio" name="scope" value="all"> Tutti gli eventi</label>
+    <div class="dialog-actions"><span class="spacer"></span>
+      <button class="btn" value="cancel" formnovalidate>Annulla</button>
+      <button class="btn primary" value="ok">OK</button>
+    </div>
+  </form>
+</dialog>
 
-  <!-- ====================== DIALOG PROFILO ====================== -->
-  <dialog id="profile-dialog">
-    <form method="dialog" class="stack" id="profile-form">
-      <h2>Il mio profilo</h2>
-      <label>Nome visualizzato <input name="display_name" required maxlength="60" /></label>
-      <label>Colore dei miei impegni <input name="color" type="color" /></label>
-      <p class="muted small" id="profile-email"></p>
-      <div class="dialog-actions">
-        <span class="spacer"></span>
-        <button class="btn" value="cancel" formnovalidate>Annulla</button>
-        <button class="btn primary" value="ok">Salva</button>
-      </div>
-    </form>
-  </dialog>
+<dialog id="ask-dialog" style="width:min(400px, calc(100% - 1.5rem));height:auto">
+  <form method="dialog" class="stack">
+    <h2 id="ask-title"></h2>
+    <label><span id="ask-label"></span> <input id="ask-input" required maxlength="60"></label>
+    <div class="dialog-actions"><span class="spacer"></span>
+      <button class="btn" value="cancel" formnovalidate>Annulla</button>
+      <button class="btn primary" value="ok">OK</button>
+    </div>
+  </form>
+</dialog>
 
-  <div id="toast" class="toast" role="status"></div>
+<dialog id="profile-dialog" style="width:min(400px, calc(100% - 1.5rem));height:auto">
+  <form method="dialog" class="stack" id="profile-form">
+    <h2>Nome e colore</h2>
+    <label>Nome visualizzato <input name="display_name" required maxlength="60"></label>
+    <label>Il tuo colore (come ti vedono i colleghi)</label>
+    <div class="colors" id="profile-colors"></div>
+    <div class="dialog-actions"><span class="spacer"></span>
+      <button class="btn" value="cancel" formnovalidate>Annulla</button>
+      <button class="btn primary" value="ok">Salva</button>
+    </div>
+  </form>
+</dialog>
 
+<div id="toast" class="toast" role="status"></div>
 
 <script>
-
-// ---------------------------------------------------------------- connessione
+// =====================================================================
+//  CONNESSIONE
+// =====================================================================
 if (SUPABASE_URL.includes('XXXXXXXX') || !SUPABASE_KEY || SUPABASE_KEY.includes('XXXXXXXX')) {
   document.body.innerHTML = '<p style="padding:2rem;font-family:sans-serif">Configura SUPABASE_URL e SUPABASE_KEY in cima a index.html</p>';
   throw new Error('Supabase non configurato');
@@ -332,30 +551,44 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
 });
 
-// italiano per il calendario
-const IT_LOCALE = {
-  code: 'it',
-  week: { dow: 1, doy: 4 },
-  buttonText: { prev: 'Prec', next: 'Succ', today: 'Oggi', year: 'Anno', month: 'Mese', week: 'Settimana', day: 'Giorno', list: 'Agenda' },
-  weekText: 'Sm',
-  allDayText: 'Tutto il giorno',
-  moreLinkText: (n) => '+altri ' + n,
-  noEventsText: 'Nessun impegno',
+// =====================================================================
+//  UTILITÀ
+// =====================================================================
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const isMobile = () => matchMedia('(max-width: 860px)').matches;
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+const ICONS = {
+  menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+  left: '<path d="m15 18-6-6 6-6"/>',
+  right: '<path d="m9 18 6-6-6-6"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  x: '<path d="M18 6 6 18M6 6l12 12"/>',
+  pencil: '<path d="M17 3a2.8 2.8 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
+  trash: '<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>',
+  copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  pin: '<path d="M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12Z"/><circle cx="12" cy="9" r="2.5"/>',
+  text: '<path d="M4 6h16M4 12h16M4 18h10"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',
+  lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/>',
+  repeat: '<path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>',
+  palette: '<circle cx="12" cy="12" r="9"/><circle cx="8" cy="10" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16" cy="10" r="1.2"/><path d="M12 21a3 3 0 0 1 0-6h2"/>',
+  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
 };
+const ic = (name, cls = 'ico') => `<svg class="${cls}" viewBox="0 0 24 24">${ICONS[name] || ''}</svg>`;
+const paintIcons = (root = document) => $$('[data-ico]', root).forEach((el) => { el.insertAdjacentHTML('afterbegin', ic(el.dataset.ico)); el.removeAttribute('data-ico'); });
 
-
-// ------------------------------------------------------------------ utilità
-const $ = (sel, root = document) => root.querySelector(sel);
-const isMobile = () => window.matchMedia('(max-width: 760px)').matches;
+const LOGO = $('link[rel=icon]').href;
+$('#logo-auth').src = LOGO; $('#logo-app').src = LOGO;
 
 const store = {
-  get(key, fallback) {
-    try { const v = localStorage.getItem(key); return v == null ? fallback : JSON.parse(v); }
-    catch { return fallback; }
-  },
-  set(key, value) {
-    try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* ignora */ }
-  },
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
 };
 
 function toast(text, isError = false) {
@@ -364,14 +597,14 @@ function toast(text, isError = false) {
   el.classList.toggle('error', isError);
   el.classList.add('show');
   clearTimeout(toast.t);
-  toast.t = setTimeout(() => el.classList.remove('show'), 3200);
+  toast.t = setTimeout(() => el.classList.remove('show'), 3500);
 }
 
-function errText(error) {
-  const m = error?.message || String(error);
+function errText(e) {
+  const m = e?.message || String(e);
   if (/Invalid login credentials/i.test(m)) return 'Email o password errati.';
-  if (/Email not confirmed/i.test(m)) return 'Devi prima confermare l\'email (controlla la posta).';
-  if (/already registered/i.test(m)) return 'Questa email è già iscritta.';
+  if (/Email not confirmed/i.test(m)) return 'Email non confermata.';
+  if (/permission denied/i.test(m)) return 'Permesso negato dal database (' + m + ')';
   return m;
 }
 
@@ -379,50 +612,87 @@ const pad = (n) => String(n).padStart(2, '0');
 const dateStr = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const timeStr = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
-const addHours = (d, n) => new Date(d.getTime() + n * 3600_000);
+const addMin = (d, n) => new Date(d.getTime() + n * 60000);
+const sameDay = (a, b) => dateStr(a) === dateStr(b);
+const fmt = (opts) => new Intl.DateTimeFormat('it-IT', opts);
+const F_DAYLONG = fmt({ weekday: 'long', day: 'numeric', month: 'long' });
+const F_DAYYEAR = fmt({ weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+const F_MONTH = fmt({ month: 'long', year: 'numeric' });
+const F_MONTHSHORT = fmt({ month: 'short' });
+const F_WD = fmt({ weekday: 'long' });
+const F_DM = fmt({ day: 'numeric', month: 'long' });
 
-// ------------------------------------------------------------------ stato
+function whenText(start, end, allDay) {
+  if (allDay) {
+    const last = addDays(end, -1);
+    return sameDay(start, last) ? cap(F_DAYLONG.format(start)) : `${cap(F_DAYLONG.format(start))} – ${F_DAYLONG.format(last)}`;
+  }
+  if (sameDay(start, end)) return `${cap(F_DAYLONG.format(start))} · ${timeStr(start)} – ${timeStr(end)}`;
+  return `${cap(F_DAYLONG.format(start))}, ${timeStr(start)} – ${F_DAYLONG.format(end)}, ${timeStr(end)}`;
+}
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+function hexToRgb(h) { const n = parseInt(h.replace('#', ''), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+function mix(hex, withHex, t) {
+  const a = hexToRgb(hex), b = hexToRgb(withHex);
+  return '#' + a.map((v, i) => pad(Math.round(v * (1 - t) + b[i] * t).toString(16))).join('');
+}
+const DARK = matchMedia('(prefers-color-scheme: dark)').matches;
+
+const PALETTE = ['#d50000', '#e67c73', '#f4511e', '#f6bf26', '#33b679', '#0b8043', '#039be5', '#3f51b5', '#7986cb', '#8e24aa', '#616161'];
+
+// italiano per il calendario
+const IT_LOCALE = {
+  code: 'it', week: { dow: 1, doy: 4 },
+  buttonText: { prev: 'Prec', next: 'Succ', today: 'Oggi', year: 'Anno', month: 'Mese', week: 'Settimana', day: 'Giorno', list: 'Programma' },
+  weekText: 'Sm', allDayText: 'Tutto il giorno', moreLinkText: (n) => `altri ${n}`, noEventsText: 'Nessun impegno in questo periodo',
+};
+
+// =====================================================================
+//  STATO
+// =====================================================================
 const state = {
   user: null,
   profile: null,
-  teams: [],                 // [{ id, name, invite_code, role, share_events }]
+  teams: [],
   teamId: store.get('rc.team', null),
-  members: [],               // membri del gruppo selezionato
-  profiles: new Map(),       // user_id -> { display_name, color }
-  hidden: new Set(store.get('rc.hidden', [])), // colleghi che NON voglio vedere
+  members: [],
+  profiles: new Map(),
+  hidden: new Set(store.get('rc.hidden', [])),
+  showMine: store.get('rc.showMine', true),
+  weekends: store.get('rc.weekends', true),
+  dimPast: store.get('rc.dimPast', true),
   calendar: null,
   channel: null,
-  editing: null,             // riga evento in modifica (o null se nuovo)
+  editing: null,
+  quick: null,
+  miniMonth: new Date(),
+  eventsCache: [],
 };
 
-// ================================================================== ACCESSO
-// Gli utenti li crea l'amministratore in Supabase > Authentication > Users.
+// =====================================================================
+//  ACCESSO
+// =====================================================================
 function showAuth() {
   $('#app-view').hidden = true;
   $('#auth-view').hidden = false;
   authMsg('');
 }
-
 function authMsg(text, isError = false) {
   const el = $('#auth-msg');
   el.textContent = text;
   el.classList.toggle('error', isError);
 }
-
 $('#login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const f = new FormData(e.target);
   authMsg('Accesso in corso…');
-  const { error } = await sb.auth.signInWithPassword({
-    email: f.get('email').trim(), password: f.get('password'),
-  });
+  const { error } = await sb.auth.signInWithPassword({ email: f.get('email').trim(), password: f.get('password') });
   if (error) authMsg(errText(error), true);
 });
-
-$('#logout-btn').addEventListener('click', () => sb.auth.signOut());
+$('#logout-btn').addEventListener('click', () => { closeMenus(); sb.auth.signOut(); });
 
 sb.auth.onAuthStateChange((event, session) => {
-  // le chiamate a Supabase vanno fuori dalla callback (evita blocchi)
   setTimeout(() => {
     if (session?.user) {
       if (state.user?.id !== session.user.id) startApp(session.user);
@@ -433,18 +703,25 @@ sb.auth.onAuthStateChange((event, session) => {
   }, 0);
 });
 
-// ================================================================== APP
+// =====================================================================
+//  AVVIO APP
+// =====================================================================
 async function startApp(user) {
   state.user = user;
   $('#auth-view').hidden = true;
   $('#app-view').hidden = false;
-
+  if (isMobile()) { $('#body').classList.add('no-left', 'no-right'); }
+  else {
+    $('#body').classList.toggle('no-left', !store.get('rc.leftOpen', true));
+    $('#body').classList.toggle('no-right', !store.get('rc.rightOpen', true));
+  }
   await loadProfile();
   initCalendar();
   await loadTeams();
   subscribeRealtime();
+  updateNotifyLabel();
+  checkReminders();
 }
-
 function stopApp() {
   state.user = null;
   state.profile = null;
@@ -452,69 +729,118 @@ function stopApp() {
   state.channel = null;
   if (state.calendar) state.calendar.destroy();
   state.calendar = null;
+  closePopovers();
 }
 
-// ------------------------------------------------------------------ profilo
+// =====================================================================
+//  PROFILO E MENU ACCOUNT
+// =====================================================================
 async function loadProfile() {
   const { data, error } = await sb.from('profiles').select('*').eq('id', state.user.id).single();
   if (error) return toast(errText(error), true);
   state.profile = data;
   state.profiles.set(data.id, data);
-  $('#me-name').textContent = data.display_name;
-  $('#me-dot').style.background = data.color;
+  const av = $('#avatar-btn');
+  av.textContent = (data.display_name || '?').trim().charAt(0).toUpperCase();
+  av.style.background = data.color;
+  $('#menu-name').textContent = data.display_name;
+  $('#menu-email').textContent = state.user.email || '';
+  $('#mine-name').textContent = data.display_name;
+  $('#mine-item').style.setProperty('--c', data.color);
+  $('#show-mine').checked = state.showMine;
 }
 
-$('#profile-btn').addEventListener('click', () => {
-  const f = $('#profile-form');
-  f.display_name.value = state.profile.display_name;
-  f.color.value = state.profile.color;
-  $('#profile-email').textContent = state.user.email;
-  $('#profile-dialog').returnValue = '';
-  $('#profile-dialog').showModal();
-});
+function buildColorPicker(container, name, withDefault, defaultColor) {
+  container.innerHTML = '';
+  if (withDefault) {
+    container.insertAdjacentHTML('beforeend',
+      `<label class="def" title="Colore predefinito"><input type="radio" name="${name}" value=""><span style="background:${defaultColor}"></span></label>`);
+  }
+  for (const c of PALETTE) {
+    container.insertAdjacentHTML('beforeend', `<label style="background:${c}" title="${c}"><input type="radio" name="${name}" value="${c}"></label>`);
+  }
+}
+function setColor(container, value) {
+  const r = $$('input', container).find((i) => i.value === (value || '')) || $$('input', container)[0];
+  if (r) r.checked = true;
+}
 
-$('#profile-dialog').addEventListener('close', async () => {
-  if ($('#profile-dialog').returnValue !== 'ok') return;
-  const f = $('#profile-form');
-  const { error } = await sb.from('profiles')
-    .update({ display_name: f.display_name.value.trim(), color: f.color.value })
-    .eq('id', state.user.id);
-  if (error) return toast(errText(error), true);
-  await loadProfile();
-  await loadMembers();
+$('#avatar-btn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const m = $('#avatar-menu');
+  const open = m.hidden;
+  closeMenus();
+  if (!open) return;
+  m.hidden = false;
+  const r = e.currentTarget.getBoundingClientRect();
+  m.style.top = r.bottom + 8 + 'px';
+  m.style.left = Math.max(8, r.right - m.offsetWidth) + 'px';
+});
+function closeMenus() { $('#avatar-menu').hidden = true; }
+
+$('#opt-weekends').checked = state.weekends;
+$('#opt-weekends').addEventListener('change', (e) => {
+  state.weekends = e.target.checked; store.set('rc.weekends', state.weekends);
+  state.calendar?.setOption('weekends', state.weekends);
+});
+$('#opt-past').checked = state.dimPast;
+$('#opt-past').addEventListener('change', (e) => {
+  state.dimPast = e.target.checked; store.set('rc.dimPast', state.dimPast);
   state.calendar?.refetchEvents();
 });
 
-// ------------------------------------------------------------------ gruppi
-async function loadTeams() {
-  const { data, error } = await sb
-    .from('team_members')
-    .select('role, share_events, team:teams(id, name, invite_code)')
-    .eq('user_id', state.user.id)
-    .order('joined_at');
+$('#menu-profile').addEventListener('click', () => {
+  closeMenus();
+  const f = $('#profile-form');
+  f.display_name.value = state.profile.display_name;
+  buildColorPicker($('#profile-colors'), 'pcolor', false);
+  if (!PALETTE.includes(state.profile.color)) {
+    $('#profile-colors').insertAdjacentHTML('afterbegin', `<label style="background:${state.profile.color}"><input type="radio" name="pcolor" value="${state.profile.color}"></label>`);
+  }
+  setColor($('#profile-colors'), state.profile.color);
+  $('#profile-dialog').returnValue = '';
+  $('#profile-dialog').showModal();
+});
+$('#profile-dialog').addEventListener('close', async () => {
+  if ($('#profile-dialog').returnValue !== 'ok') return;
+  const f = $('#profile-form');
+  const color = $('#profile-colors input:checked')?.value || state.profile.color;
+  const { error } = await sb.from('profiles').update({ display_name: f.display_name.value.trim(), color }).eq('id', state.user.id);
   if (error) return toast(errText(error), true);
+  await loadProfile();
+  await loadMembers();
+});
 
+$('#show-mine').addEventListener('change', (e) => {
+  state.showMine = e.target.checked; store.set('rc.showMine', state.showMine);
+  state.calendar?.refetchEvents();
+});
+
+// =====================================================================
+//  GRUPPI (pannello destro)
+// =====================================================================
+async function loadTeams() {
+  const { data, error } = await sb.from('team_members')
+    .select('role, share_events, team:teams(id, name, invite_code)')
+    .eq('user_id', state.user.id).order('joined_at');
+  if (error) return toast(errText(error), true);
   state.teams = data.filter((r) => r.team).map((r) => ({ ...r.team, role: r.role, share_events: r.share_events }));
   if (!state.teams.some((t) => t.id === state.teamId)) state.teamId = state.teams[0]?.id ?? null;
   store.set('rc.team', state.teamId);
-
   const sel = $('#team-select');
   sel.innerHTML = '';
   for (const t of state.teams) sel.add(new Option(t.name, t.id, false, t.id === state.teamId));
-
   $('#no-team').hidden = state.teams.length > 0;
   $('#team-box').hidden = state.teams.length === 0;
   await loadMembers();
 }
-
 const currentTeam = () => state.teams.find((t) => t.id === state.teamId);
 
 async function loadMembers() {
   const team = currentTeam();
   state.members = [];
   if (team) {
-    const { data, error } = await sb
-      .from('team_members')
+    const { data, error } = await sb.from('team_members')
       .select('user_id, role, share_events, profile:profiles(id, display_name, color)')
       .eq('team_id', team.id);
     if (error) return toast(errText(error), true);
@@ -530,7 +856,6 @@ function renderTeamPanel() {
   if (!team) return;
   $('#invite-code').textContent = team.invite_code;
   $('#regen-code').hidden = team.role !== 'owner';
-
   const me = state.members.find((m) => m.user_id === state.user.id);
   $('#share-toggle').checked = me ? me.share_events : true;
 
@@ -539,83 +864,54 @@ function renderTeamPanel() {
   const sorted = [...state.members].sort((a, b) =>
     (a.user_id === state.user.id ? -1 : b.user_id === state.user.id ? 1 : 0) ||
     a.profile.display_name.localeCompare(b.profile.display_name));
-
   for (const m of sorted) {
     const isMe = m.user_id === state.user.id;
     const li = document.createElement('li');
-
+    li.style.setProperty('--c', m.profile.color);
     const cb = document.createElement('input');
     cb.type = 'checkbox';
-    cb.checked = isMe || (m.share_events && !state.hidden.has(m.user_id));
-    cb.disabled = isMe || !m.share_events;
-    cb.title = isMe ? 'Sei tu' : m.share_events ? 'Mostra/nascondi nel mio calendario' : 'Ha scelto di non condividere';
+    cb.checked = isMe ? state.showMine : (m.share_events && !state.hidden.has(m.user_id));
+    cb.disabled = !isMe && !m.share_events;
+    cb.title = isMe ? 'I miei impegni' : m.share_events ? 'Mostra/nascondi nel mio calendario' : 'Ha scelto di non condividere';
     cb.addEventListener('change', () => {
-      cb.checked ? state.hidden.delete(m.user_id) : state.hidden.add(m.user_id);
-      store.set('rc.hidden', [...state.hidden]);
+      if (isMe) { state.showMine = cb.checked; store.set('rc.showMine', cb.checked); $('#show-mine').checked = cb.checked; }
+      else { cb.checked ? state.hidden.delete(m.user_id) : state.hidden.add(m.user_id); store.set('rc.hidden', [...state.hidden]); }
       state.calendar?.refetchEvents();
     });
-
-    const dot = document.createElement('span');
-    dot.className = 'dot';
-    dot.style.background = m.profile.color;
-
-    const name = document.createElement('span');
-    name.className = 'name';
-    name.textContent = m.profile.display_name + (isMe ? ' (tu)' : '');
-
+    const dot = document.createElement('span'); dot.className = 'dot'; dot.style.background = m.profile.color;
+    const name = document.createElement('span'); name.className = 'name'; name.textContent = m.profile.display_name + (isMe ? ' (tu)' : '');
     li.append(cb, dot, name);
-
     if (m.role === 'owner') li.append(badge('admin'));
     if (!m.share_events) li.append(badge('non condivide', 'off'));
-
     if (team.role === 'owner' && !isMe) {
       const x = document.createElement('button');
-      x.className = 'btn ghost icon small';
-      x.textContent = '✕';
-      x.title = 'Rimuovi dal gruppo';
+      x.className = 'icon-btn sm'; x.title = 'Rimuovi dal gruppo'; x.innerHTML = ic('x');
       x.addEventListener('click', () => removeMember(m));
       li.append(x);
     }
     list.append(li);
   }
 }
+function badge(text, cls = '') { const b = document.createElement('span'); b.className = `badge ${cls}`; b.textContent = text; return b; }
 
-function badge(text, cls = '') {
-  const b = document.createElement('span');
-  b.className = `badge ${cls}`;
-  b.textContent = text;
-  return b;
-}
-
-$('#team-select').addEventListener('change', (e) => {
-  state.teamId = e.target.value;
-  store.set('rc.team', state.teamId);
-  loadMembers();
-});
-
+$('#team-select').addEventListener('change', (e) => { state.teamId = e.target.value; store.set('rc.team', state.teamId); loadMembers(); });
 $('#share-toggle').addEventListener('change', async (e) => {
-  const { error } = await sb.from('team_members')
-    .update({ share_events: e.target.checked })
-    .eq('team_id', state.teamId).eq('user_id', state.user.id);
+  const { error } = await sb.from('team_members').update({ share_events: e.target.checked }).eq('team_id', state.teamId).eq('user_id', state.user.id);
   if (error) { e.target.checked = !e.target.checked; return toast(errText(error), true); }
   toast(e.target.checked ? 'I tuoi impegni sono visibili al gruppo' : 'I tuoi impegni ora sono nascosti al gruppo');
   await loadTeams();
 });
-
 $('#copy-code').addEventListener('click', async () => {
   const code = currentTeam().invite_code;
-  if (window.RenkoApp?.copy) { window.RenkoApp.copy(code); return toast('Codice copiato'); } // app Android
-  try { await navigator.clipboard.writeText(code); toast('Codice copiato'); }
-  catch { toast('Copia non riuscita: selezionalo a mano', true); }
+  if (window.RenkoApp?.copy) { window.RenkoApp.copy(code); return toast('Codice copiato'); }
+  try { await navigator.clipboard.writeText(code); toast('Codice copiato'); } catch { toast('Copia non riuscita', true); }
 });
-
 $('#regen-code').addEventListener('click', async () => {
   if (!confirm('Generare un nuovo codice? Quello vecchio smetterà di funzionare.')) return;
   const { error } = await sb.rpc('regenerate_invite', { p_team: state.teamId });
   if (error) return toast(errText(error), true);
   await loadTeams();
 });
-
 $('#create-team').addEventListener('click', async () => {
   const name = await ask('Nuovo gruppo', 'Nome del gruppo');
   if (!name) return;
@@ -625,7 +921,6 @@ $('#create-team').addEventListener('click', async () => {
   await loadTeams();
   toast(`Gruppo creato. Codice invito: ${data.invite_code}`);
 });
-
 $('#join-team').addEventListener('click', async () => {
   const code = await ask('Entra in un gruppo', 'Codice invito');
   if (!code) return;
@@ -635,28 +930,19 @@ $('#join-team').addEventListener('click', async () => {
   await loadTeams();
   toast(`Sei entrato in ${data.name}`);
 });
-
 $('#leave-team').addEventListener('click', async () => {
   const team = currentTeam();
   if (!team || !confirm(`Uscire dal gruppo "${team.name}"?`)) return;
-  const { error } = await sb.from('team_members')
-    .delete().eq('team_id', team.id).eq('user_id', state.user.id);
+  const { error } = await sb.from('team_members').delete().eq('team_id', team.id).eq('user_id', state.user.id);
   if (error) return toast(errText(error), true);
   await loadTeams();
 });
-
 async function removeMember(m) {
   if (!confirm(`Rimuovere ${m.profile.display_name} dal gruppo?`)) return;
-  const { error } = await sb.from('team_members')
-    .delete().eq('team_id', state.teamId).eq('user_id', m.user_id);
+  const { error } = await sb.from('team_members').delete().eq('team_id', state.teamId).eq('user_id', m.user_id);
   if (error) return toast(errText(error), true);
   await loadMembers();
 }
-
-// sidebar a scomparsa su telefono
-$('#team-toggle').addEventListener('click', () => $('#sidebar').classList.toggle('open'));
-$('#team-close').addEventListener('click', () => $('#sidebar').classList.remove('open'));
-
 function ask(title, label) {
   const dlg = $('#ask-dialog');
   $('#ask-title').textContent = title;
@@ -664,151 +950,513 @@ function ask(title, label) {
   $('#ask-input').value = '';
   dlg.returnValue = '';
   dlg.showModal();
-  return new Promise((resolve) => {
-    dlg.addEventListener('close', () => {
-      resolve(dlg.returnValue === 'ok' ? $('#ask-input').value.trim() : null);
-    }, { once: true });
-  });
+  return new Promise((res) => dlg.addEventListener('close', () => res(dlg.returnValue === 'ok' ? $('#ask-input').value.trim() : null), { once: true }));
 }
 
-// ================================================================== CALENDARIO
+// =====================================================================
+//  PANNELLI LATERALI
+// =====================================================================
+function setPanel(side, open) {
+  if (isMobile()) {
+    $('#' + side).classList.toggle('open', open);
+    $('#scrim').classList.toggle('show', $('#left').classList.contains('open') || $('#right').classList.contains('open'));
+  } else {
+    $('#body').classList.toggle('no-' + side, !open);
+    store.set(side === 'left' ? 'rc.leftOpen' : 'rc.rightOpen', open);
+    setTimeout(() => state.calendar?.updateSize(), 220);
+  }
+}
+const panelOpen = (side) => isMobile() ? $('#' + side).classList.contains('open') : !$('#body').classList.contains('no-' + side);
+$('#menu-btn').addEventListener('click', () => setPanel('left', !panelOpen('left')));
+$('#team-btn').addEventListener('click', () => setPanel('right', !panelOpen('right')));
+$('#right-close').addEventListener('click', () => setPanel('right', false));
+$('#scrim').addEventListener('click', () => { setPanel('left', false); setPanel('right', false); });
+
+// =====================================================================
+//  CALENDARIO
+// =====================================================================
+const VIEWS = [
+  ['timeGridDay', 'Giorno', 'g'], ['timeGrid3', '3 giorni', 'x'], ['timeGridWeek', 'Settimana', 's'],
+  ['dayGridMonth', 'Mese', 'm'], ['multiMonthYear', 'Anno', 'a'], ['listMonth', 'Programma', 'p'],
+];
+
 function initCalendar() {
   if (state.calendar) state.calendar.destroy();
   const mobile = isMobile();
+  let view = store.get('rc.view', mobile ? 'timeGrid3' : 'timeGridWeek');
+  if (!VIEWS.some((v) => v[0] === view)) view = 'timeGridWeek';
 
   state.calendar = new FullCalendar.Calendar($('#calendar'), {
     locales: [IT_LOCALE],
     locale: 'it',
     timeZone: 'local',
-    initialView: store.get('rc.view', mobile ? 'timeGridDay' : 'timeGridWeek'),
-    headerToolbar: mobile
-      ? { left: 'prev,next', center: 'title', right: 'today' }
-      : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek' },
-    footerToolbar: mobile ? { center: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek' } : false,
+    initialView: view,
+    headerToolbar: false,
     height: '100%',
+    views: {
+      timeGrid3: { type: 'timeGrid', duration: { days: 3 }, buttonText: '3 giorni' },
+      multiMonthYear: { multiMonthMaxColumns: 4, multiMonthMinWidth: 220 },
+    },
+    weekends: state.weekends,
     nowIndicator: true,
     firstDay: 1,
-    slotMinTime: '06:00:00',
-    slotMaxTime: '23:00:00',
-    scrollTime: '08:00:00',
-    allDayText: 'giorno',
+    scrollTime: '07:30:00',
+    scrollTimeReset: false,
+    slotDuration: '00:30:00',
+    slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+    eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+    slotLabelInterval: '01:00',
+    allDayText: '',
     selectable: true,
     selectMirror: true,
+    unselectCancel: '.popover, dialog',
     longPressDelay: 350,
     editable: true,
-    eventStartEditable: true,
     dayMaxEvents: true,
+    fixedWeekCount: false,
+    navLinks: true,
+    navLinkDayClick: (date) => { state.calendar.changeView('timeGridDay', date); },
     events: fetchEvents,
-    select: (info) => { openEventDialog(null, info); state.calendar.unselect(); },
-    eventClick: (info) => openEventDialog(info.event.extendedProps.row),
+    dayHeaderContent: dayHeader,
+    eventContent: eventContent,
+    eventClassNames: (arg) => {
+      const c = [arg.event.extendedProps.mine ? 'ev-mine' : 'ev-other'];
+      if (state.dimPast && arg.event.end && arg.event.end < new Date()) c.push('ev-past');
+      return c;
+    },
+    select: (info) => openQuick(info),
+    eventClick: (info) => { info.jsEvent.preventDefault(); openDetail(info.event, info.el); },
     eventDrop: moveEvent,
     eventResize: moveEvent,
-    datesSet: (info) => store.set('rc.view', info.view.type),
+    datesSet: onDatesSet,
   });
   state.calendar.render();
+  $('#view-select').value = view;
+  renderViewsMobile();
+}
+
+function dayHeader(arg) {
+  const t = arg.view.type;
+  if (t.startsWith('timeGrid')) {
+    const d = arg.date;
+    const today = sameDay(d, new Date());
+    const wd = fmt({ weekday: 'short' }).format(d).replace('.', '');
+    return { html: `<div class="dh ${today ? 'today' : ''}"><span class="dh-w">${wd}</span><span class="dh-n">${d.getDate()}</span></div>` };
+  }
+  if (t === 'dayGridMonth') return { html: `<span class="dh-w">${esc(fmt({ weekday: 'short' }).format(arg.date).replace('.', ''))}</span>` };
+  return true;
+}
+
+function eventContent(arg) {
+  const p = arg.event.extendedProps;
+  if (!p.row) return true; // anteprima durante la selezione
+  const t = arg.view.type;
+  const lock = p.row.is_private ? ic('lock', 'ico ev-ico') : '';
+  const rep = p.row.repeat_freq ? ic('repeat', 'ico ev-ico') : '';
+  const owner = p.mine ? '' : (state.profiles.get(p.row.owner_id)?.display_name || '');
+  if (t.startsWith('timeGrid') && !arg.event.allDay) {
+    const mins = arg.event.end ? (arg.event.end - arg.event.start) / 60000 : 60;
+    if (mins <= 45) {
+      return { html: `<div class="ev"><div class="ev-t">${lock}${rep}${esc(arg.event.title)}<span class="ev-s" style="font-weight:400">, ${esc(arg.timeText.split(' - ')[0])}${owner ? ' · ' + esc(owner) : ''}</span></div></div>` };
+    }
+    return { html: `<div class="ev"><div class="ev-t">${lock}${rep}${esc(arg.event.title)}</div><div class="ev-s">${esc(arg.timeText)}${owner ? ' · ' + esc(owner) : ''}</div>${p.row.location ? `<div class="ev-s">${esc(p.row.location)}</div>` : ''}</div>` };
+  }
+  if (t.startsWith('list')) {
+    return { html: `${lock}${rep}${esc(arg.event.title)}${owner ? ` <span class="muted">· ${esc(owner)}</span>` : ''}` };
+  }
+  if (!arg.event.allDay && t === 'dayGridMonth') {
+    return { html: `<div class="fc-daygrid-event-dot" style="border-color:${p.color}"></div><div class="fc-event-time">${esc(arg.timeText)}</div><div class="fc-event-title">${lock}${esc(arg.event.title)}</div>` };
+  }
+  return { html: `<div class="ev-t" style="font-weight:500">${lock}${rep}${esc(arg.event.title)}</div>` };
+}
+
+function onDatesSet(info) {
+  store.set('rc.view', info.view.type);
+  $('#view-select').value = info.view.type;
+  $('#title').textContent = viewTitle(info.view);
+  state.miniMonth = new Date(info.view.currentStart);
+  renderMini();
+  renderViewsMobile();
+  closePopovers();
+}
+
+function viewTitle(view) {
+  const s = view.currentStart, e = addDays(view.currentEnd, -1);
+  if (view.type === 'timeGridDay') return cap(fmt({ day: 'numeric', month: 'long', year: 'numeric' }).format(s));
+  if (view.type === 'multiMonthYear') return String(s.getFullYear());
+  if (view.type === 'dayGridMonth' || view.type === 'listMonth') return F_MONTH.format(s);
+  if (s.getMonth() === e.getMonth()) return F_MONTH.format(s);
+  if (s.getFullYear() === e.getFullYear()) return `${F_MONTHSHORT.format(s).replace('.', '')} – ${F_MONTHSHORT.format(e).replace('.', '')} ${e.getFullYear()}`;
+  return `${F_MONTHSHORT.format(s)} ${s.getFullYear()} – ${F_MONTHSHORT.format(e)} ${e.getFullYear()}`;
+}
+
+$('#today-btn').addEventListener('click', () => state.calendar.today());
+$('#prev-btn').addEventListener('click', () => state.calendar.prev());
+$('#next-btn').addEventListener('click', () => state.calendar.next());
+$('#view-select').addEventListener('change', (e) => state.calendar.changeView(e.target.value));
+
+function renderViewsMobile() {
+  const box = $('#views-mobile');
+  const cur = state.calendar?.view.type;
+  box.innerHTML = VIEWS.map(([v, label]) => `<button type="button" data-v="${v}" class="${v === cur ? 'active' : ''}">${label}</button>`).join('');
+  $$('button', box).forEach((b) => b.addEventListener('click', () => { state.calendar.changeView(b.dataset.v); setPanel('left', false); }));
+}
+
+// ------------------------------------------------------------- mini calendario
+function renderMini() {
+  const box = $('#mini');
+  const m = new Date(state.miniMonth.getFullYear(), state.miniMonth.getMonth(), 1);
+  const start = addDays(m, -((m.getDay() + 6) % 7));
+  const v = state.calendar?.view;
+  const today = new Date();
+  let html = `<div class="mini-head"><span>${F_MONTH.format(m)}</span><span>
+    <button class="icon-btn sm" data-mm="-1" title="Mese precedente">${ic('left')}</button>
+    <button class="icon-btn sm" data-mm="1" title="Mese successivo">${ic('right')}</button></span></div><div class="mini-grid">`;
+  html += ['L', 'M', 'M', 'G', 'V', 'S', 'D'].map((d) => `<span class="wd">${d}</span>`).join('');
+  for (let i = 0; i < 42; i++) {
+    const d = addDays(start, i);
+    const cls = [];
+    if (d.getMonth() !== m.getMonth()) cls.push('other');
+    if (sameDay(d, today)) cls.push('today');
+    else if (v && v.type !== 'multiMonthYear' && v.type !== 'dayGridMonth' && v.type !== 'listMonth' && d >= v.activeStart && d < v.activeEnd) cls.push('inview');
+    html += `<button type="button" class="${cls.join(' ')}" data-d="${dateStr(d)}">${d.getDate()}</button>`;
+  }
+  box.innerHTML = html + '</div>';
+  $$('[data-mm]', box).forEach((b) => b.addEventListener('click', () => {
+    state.miniMonth = new Date(m.getFullYear(), m.getMonth() + Number(b.dataset.mm), 1);
+    renderMini();
+  }));
+  $$('[data-d]', box).forEach((b) => b.addEventListener('click', () => {
+    state.calendar.gotoDate(b.dataset.d);
+    if (isMobile()) setPanel('left', false);
+  }));
+}
+
+// ------------------------------------------------------------- caricamento impegni
+// Espande un impegno (anche ricorrente) nelle occorrenze dentro [rs, re)
+function occurrences(ev, rs, re) {
+  const s = new Date(ev.start_at), e = new Date(ev.end_at);
+  const durMs = e - s;
+  const durDays = Math.round(durMs / 86400000);
+  const endOf = (d) => ev.all_day ? addDays(d, durDays) : new Date(d.getTime() + durMs);
+  if (!ev.repeat_freq) return (s < re && e > rs) || (durMs === 0 && s >= rs && s < re) ? [{ start: s, end: e, key: null }] : [];
+
+  const until = ev.repeat_until ? new Date(ev.repeat_until + 'T23:59:59') : null;
+  const except = new Set(ev.repeat_except || []);
+  const n = Math.max(1, ev.repeat_interval || 1);
+  const out = [];
+  // salto in avanti approssimato per non ciclare migliaia di volte
+  let k0 = 0;
+  const lookBack = addDays(rs, -Math.max(1, durDays + 1));
+  if (lookBack > s) {
+    const days = (lookBack - s) / 86400000;
+    if (ev.repeat_freq === 'daily') k0 = Math.floor(days / n);
+    else if (ev.repeat_freq === 'weekdays') k0 = Math.floor(days);
+    else if (ev.repeat_freq === 'weekly') k0 = Math.floor(days / (7 * n));
+    else if (ev.repeat_freq === 'monthly') k0 = Math.floor(days / (31 * n));
+    else if (ev.repeat_freq === 'yearly') k0 = Math.floor(days / (366 * n));
+  }
+  for (let k = k0; k < k0 + 1500; k++) {
+    const d = new Date(s);
+    let skip = false;
+    switch (ev.repeat_freq) {
+      case 'daily': d.setDate(s.getDate() + k * n); break;
+      case 'weekdays': d.setDate(s.getDate() + k); skip = d.getDay() === 0 || d.getDay() === 6; break;
+      case 'weekly': d.setDate(s.getDate() + 7 * k * n); break;
+      case 'monthly': d.setMonth(s.getMonth() + k * n); skip = d.getDate() !== s.getDate(); break;
+      case 'yearly': d.setFullYear(s.getFullYear() + k * n); skip = d.getMonth() !== s.getMonth(); break;
+      default: return out;
+    }
+    if (d >= re || (until && d > until)) break;
+    if (skip) continue;
+    const de = endOf(d);
+    if (de <= rs) continue;
+    const key = dateStr(d);
+    if (except.has(key)) continue;
+    out.push({ start: d, end: de, key });
+  }
+  return out;
+}
+
+async function queryEvents(rs, re, extra) {
+  let q = sb.from('events').select('*')
+    .lt('start_at', re.toISOString())
+    .or(`end_at.gte."${rs.toISOString()}",repeat_freq.not.is.null`)
+    .order('start_at');
+  if (extra) q = extra(q);
+  return q;
 }
 
 async function fetchEvents(info, success, failure) {
   if (!state.user) return success([]);
-  // RLS di Supabase restituisce già solo: i miei + quelli condivisi dei colleghi
-  const { data, error } = await sb
-    .from('events')
-    .select('*')
-    .lt('start_at', info.end.toISOString())
-    .gte('end_at', info.start.toISOString())
-    .order('start_at');
+  const { data, error } = await queryEvents(info.start, info.end);
   if (error) { toast(errText(error), true); return failure(error); }
+  state.eventsCache = data;
 
-  const teamMembers = new Set(state.members.map((m) => m.user_id));
+  const team = new Set(state.members.map((m) => m.user_id));
   const me = state.user.id;
-
-  success(data
-    .filter((ev) => ev.owner_id === me || (teamMembers.has(ev.owner_id) && !state.hidden.has(ev.owner_id)))
-    .map((ev) => {
-      const mine = ev.owner_id === me;
-      const owner = state.profiles.get(ev.owner_id);
-      const color = owner?.color || '#64748b';
-      return {
-        id: ev.id,
-        title: mine ? (ev.is_private ? `🔒 ${ev.title}` : ev.title) : `${owner?.display_name ?? '?'} · ${ev.title}`,
-        start: ev.start_at,
-        end: ev.end_at,
-        allDay: ev.all_day,
-        backgroundColor: color,
-        borderColor: color,
-        editable: mine,
-        classNames: mine ? ['ev-mine'] : ['ev-other'],
-        extendedProps: { row: ev },
-      };
-    }));
+  const out = [];
+  for (const ev of data) {
+    const mine = ev.owner_id === me;
+    if (mine && !state.showMine) continue;
+    if (!mine && (!team.has(ev.owner_id) || state.hidden.has(ev.owner_id))) continue;
+    const ownerColor = state.profiles.get(ev.owner_id)?.color || '#616161';
+    const color = mine ? (ev.color || ownerColor) : ownerColor;
+    const bg = mine ? color : (DARK ? mix(color, '#131314', .65) : mix(color, '#ffffff', .78));
+    const fg = mine ? '#ffffff' : (DARK ? mix(color, '#ffffff', .6) : mix(color, '#000000', .45));
+    for (const o of occurrences(ev, info.start, info.end)) {
+      out.push({
+        id: o.key ? `${ev.id}::${o.key}` : ev.id,
+        title: ev.title,
+        start: o.start, end: o.end, allDay: ev.all_day,
+        backgroundColor: bg, borderColor: color, textColor: fg,
+        editable: mine && !ev.repeat_freq,
+        extendedProps: { row: ev, mine, occKey: o.key, color },
+      });
+    }
+  }
+  success(out);
 }
 
 async function moveEvent(info) {
   const ev = info.event;
-  const end = ev.end ?? (ev.allDay ? addDays(ev.start, 1) : addHours(ev.start, 1));
-  const { error } = await sb.from('events').update({
-    start_at: ev.start.toISOString(), end_at: end.toISOString(), all_day: ev.allDay,
-  }).eq('id', ev.id);
+  const end = ev.end ?? (ev.allDay ? addDays(ev.start, 1) : addMin(ev.start, 60));
+  const { error } = await sb.from('events').update({ start_at: ev.start.toISOString(), end_at: end.toISOString(), all_day: ev.allDay }).eq('id', ev.extendedProps.row.id);
   if (error) { info.revert(); toast(errText(error), true); }
+  else toast('Impegno spostato');
 }
 
-// ------------------------------------------------------------------ dialog impegno
+// =====================================================================
+//  POPOVER (creazione rapida e dettaglio)
+// =====================================================================
+function placePopover(pop, rect) {
+  pop.hidden = false;
+  if (isMobile()) return;
+  const w = pop.offsetWidth, h = pop.offsetHeight, vw = innerWidth, vh = innerHeight, gap = 10;
+  let left = rect.right + gap;
+  if (left + w > vw - 8) left = rect.left - w - gap;
+  if (left < 8) left = Math.min(vw - w - 8, Math.max(8, rect.left + rect.width / 2 - w / 2));
+  let top = rect.top;
+  if (top + h > vh - 8) top = vh - h - 8;
+  if (top < 8) top = 8;
+  pop.style.left = left + 'px';
+  pop.style.top = top + 'px';
+}
+function closePopovers() {
+  $('#quick-pop').hidden = true;
+  $('#detail-pop').hidden = true;
+  state.quick = null;
+  state.calendar?.unselect();
+}
+document.addEventListener('mousedown', (e) => {
+  if (!e.target.closest('.menu, #avatar-btn')) closeMenus();
+  if (!e.target.closest('.popover, .fc-event, .fc-timegrid-slot, .fc-daygrid-day, .fc-highlight, dialog, .fc-event-mirror')) closePopovers();
+});
+
+// --- creazione rapida
+function openQuick(info) {
+  closePopovers();
+  if (isMobile()) { state.calendar.unselect(); return openEventDialog(null, info); }
+  state.quick = { start: info.start, end: info.end, allDay: info.allDay };
+  const f = $('#quick-form');
+  f.reset();
+  $('#quick-when').textContent = whenText(info.start, info.end, info.allDay);
+  $('#detail-pop').hidden = true;
+  const jx = info.jsEvent?.clientX, jy = info.jsEvent?.clientY;
+  // l'anteprima della selezione viene disegnata subito dopo: aspetto un attimo
+  requestAnimationFrame(() => {
+    const anchor = $('.fc-event-mirror') || $('.fc-highlight');
+    let rect = anchor?.getBoundingClientRect();
+    if (!rect || !rect.width) rect = jx != null ? { left: jx, right: jx, top: jy - 20, width: 0 } : { left: innerWidth / 2, right: innerWidth / 2, top: 140, width: 0 };
+    placePopover($('#quick-pop'), rect);
+    f.title.focus();
+  });
+}
+$('#quick-close').addEventListener('click', closePopovers);
+$('#quick-more').addEventListener('click', () => {
+  const q = state.quick, title = $('#quick-form').title.value;
+  closePopovers();
+  openEventDialog(null, q, { title });
+});
+$('#quick-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const q = state.quick;
+  if (!q) return;
+  const title = e.target.title.value.trim();
+  if (!title) return;
+  const { error } = await sb.from('events').insert({
+    title, start_at: q.start.toISOString(), end_at: q.end.toISOString(), all_day: q.allDay,
+  });
+  if (error) return toast(errText(error), true);
+  closePopovers();
+  state.calendar.refetchEvents();
+  toast('Impegno salvato');
+});
+
+// --- dettaglio
+const REPEAT_TEXT = {
+  daily: (n) => n > 1 ? `Ogni ${n} giorni` : 'Ogni giorno',
+  weekdays: () => 'Tutti i giorni feriali (lun–ven)',
+  weekly: (n, d) => (n > 1 ? `Ogni ${n} settimane` : 'Ogni settimana') + ` di ${F_WD.format(d)}`,
+  monthly: (n, d) => (n > 1 ? `Ogni ${n} mesi` : 'Ogni mese') + ` il giorno ${d.getDate()}`,
+  yearly: (n, d) => (n > 1 ? `Ogni ${n} anni` : 'Ogni anno') + ` il ${F_DM.format(d)}`,
+};
+const REMINDER_TEXT = { 0: "All'inizio", 5: '5 minuti prima', 10: '10 minuti prima', 15: '15 minuti prima', 30: '30 minuti prima', 60: '1 ora prima', 120: '2 ore prima', 1440: '1 giorno prima', 10080: '1 settimana prima' };
+
+function openDetail(fcEvent, el) {
+  closePopovers();
+  const p = fcEvent.extendedProps, row = p.row;
+  const start = fcEvent.start, end = fcEvent.end || (fcEvent.allDay ? addDays(start, 1) : addMin(start, 60));
+  const owner = state.profiles.get(row.owner_id);
+  const pop = $('#detail-pop');
+  let rep = '';
+  if (row.repeat_freq) {
+    rep = REPEAT_TEXT[row.repeat_freq](row.repeat_interval || 1, new Date(row.start_at));
+    if (row.repeat_until) rep += `, fino al ${F_DM.format(new Date(row.repeat_until + 'T12:00'))}`;
+  }
+  pop.innerHTML = `
+    <div class="pop-tools">
+      ${p.mine ? `<button class="icon-btn sm" data-a="edit" title="Modifica">${ic('pencil')}</button>
+      <button class="icon-btn sm" data-a="delete" title="Elimina">${ic('trash')}</button>
+      <button class="icon-btn sm" data-a="copy" title="Duplica">${ic('copy')}</button>` : ''}
+      <button class="icon-btn sm" data-a="close" title="Chiudi">${ic('x')}</button>
+    </div>
+    <div class="pop-row title"><span class="swatch" style="background:${p.color}"></span><div>${esc(row.title)}
+      <div class="pop-sub">${esc(whenText(start, end, fcEvent.allDay))}</div>
+      ${rep ? `<div class="pop-sub">${esc(rep)}</div>` : ''}</div></div>
+    ${row.location ? `<div class="pop-row">${ic('pin')}<div>${esc(row.location)}</div></div>` : ''}
+    ${row.description ? `<div class="pop-row">${ic('text')}<div class="pop-desc">${esc(row.description)}</div></div>` : ''}
+    ${p.mine && row.reminder_minutes != null ? `<div class="pop-row">${ic('bell')}<div>${esc(REMINDER_TEXT[row.reminder_minutes] || row.reminder_minutes + ' minuti prima')}</div></div>` : ''}
+    <div class="pop-row">${ic('user')}<div>${esc(owner?.display_name || '')}${p.mine ? ' <span class="muted">(tu)</span>' : ''}</div></div>
+    ${row.is_private ? `<div class="pop-row">${ic('lock')}<div>Privato</div></div>` : ''}`;
+  pop.querySelector('[data-a=close]').onclick = closePopovers;
+  if (p.mine) {
+    pop.querySelector('[data-a=edit]').onclick = () => { closePopovers(); openEventDialog(row); };
+    pop.querySelector('[data-a=copy]').onclick = () => { closePopovers(); openEventDialog(null, { start, end, allDay: fcEvent.allDay }, { ...row, title: row.title + ' (copia)', repeat_freq: null }); };
+    pop.querySelector('[data-a=delete]').onclick = () => deleteEvent(row, p.occKey);
+  }
+  $('#quick-pop').hidden = true;
+  placePopover(pop, el.getBoundingClientRect());
+}
+
+async function deleteEvent(row, occKey) {
+  let scope = 'all';
+  if (row.repeat_freq && occKey) {
+    const dlg = $('#series-dialog');
+    dlg.returnValue = '';
+    dlg.showModal();
+    const ok = await new Promise((r) => dlg.addEventListener('close', () => r(dlg.returnValue === 'ok'), { once: true }));
+    if (!ok) return;
+    scope = $('input[name=scope]:checked', dlg).value;
+  } else if (!confirm('Eliminare questo impegno?')) return;
+
+  const { error } = scope === 'one'
+    ? await sb.from('events').update({ repeat_except: [...(row.repeat_except || []), occKey] }).eq('id', row.id)
+    : await sb.from('events').delete().eq('id', row.id);
+  if (error) return toast(errText(error), true);
+  closePopovers();
+  state.calendar.refetchEvents();
+  toast('Impegno eliminato');
+}
+
+// =====================================================================
+//  DIALOG IMPEGNO COMPLETO
+// =====================================================================
 const form = $('#event-form');
+
+function repeatOptions(d) {
+  const sel = form.repeat_freq, cur = sel.value;
+  sel.innerHTML = `<option value="">Non si ripete</option>
+    <option value="daily">Ogni giorno</option>
+    <option value="weekdays">Tutti i giorni feriali (lun–ven)</option>
+    <option value="weekly">Ogni settimana di ${F_WD.format(d)}</option>
+    <option value="monthly">Ogni mese il giorno ${d.getDate()}</option>
+    <option value="yearly">Ogni anno il ${F_DM.format(d)}</option>`;
+  sel.value = cur;
+  updateRepeatExtra();
+}
+function updateRepeatExtra() {
+  const f = form.repeat_freq.value;
+  $('#repeat-extra').hidden = !f;
+  form.repeat_interval.disabled = f === 'weekdays';
+  $('#repeat-unit').textContent = { daily: 'giorni', weekdays: '', weekly: 'settimane', monthly: 'mesi', yearly: 'anni' }[f] || '';
+}
+form.repeat_freq.addEventListener('change', updateRepeatExtra);
 
 function setTimeVisibility() {
   const allDay = form.all_day.checked;
-  form.querySelectorAll('.time').forEach((el) => (el.hidden = allDay));
+  $$('.time', form).forEach((el) => (el.hidden = allDay));
   form.start_time.required = !allDay;
   form.end_time.required = !allDay;
 }
 form.all_day.addEventListener('change', setTimeVisibility);
 
-// se sposto l'inizio dopo la fine, la fine segue
-form.start_date.addEventListener('change', () => {
-  if (form.end_date.value < form.start_date.value) form.end_date.value = form.start_date.value;
-});
+// spostando l'inizio, la fine segue mantenendo la durata
+let lastStart = null;
+function readStart() { return new Date(`${form.start_date.value}T${form.start_time.value || '00:00'}`); }
+function readEnd() { return new Date(`${form.end_date.value}T${form.end_time.value || '00:00'}`); }
+function onStartChange() {
+  const ns = readStart();
+  if (lastStart && !isNaN(ns)) {
+    const ne = new Date(readEnd().getTime() + (ns - lastStart));
+    if (!isNaN(ne)) { form.end_date.value = dateStr(ne); if (!form.all_day.checked) form.end_time.value = timeStr(ne); }
+  }
+  lastStart = readStart();
+  if (!isNaN(lastStart)) repeatOptions(lastStart);
+}
+form.start_date.addEventListener('change', onStartChange);
+form.start_time.addEventListener('change', onStartChange);
 
-function openEventDialog(row, selection) {
+function openEventDialog(row, sel, preset) {
+  closePopovers();
   state.editing = row;
-  const mine = !row || row.owner_id === state.user.id;
   form.reset();
   $('#event-msg').textContent = '';
+  const src = row || preset || {};
 
   let start, end, allDay;
-  if (row) {
-    start = new Date(row.start_at); end = new Date(row.end_at); allDay = row.all_day;
-    form.title.value = row.title;
-    form.location.value = row.location || '';
-    form.description.value = row.description || '';
-    form.is_private.checked = row.is_private;
-  } else if (selection) {
-    start = selection.start; end = selection.end; allDay = selection.allDay;
-  } else {
-    start = new Date(); start.setMinutes(0, 0, 0); start = addHours(start, 1);
-    end = addHours(start, 1); allDay = false;
+  if (row) { start = new Date(row.start_at); end = new Date(row.end_at); allDay = row.all_day; }
+  else if (sel) { start = sel.start; end = sel.end; allDay = sel.allDay; }
+  else {
+    start = new Date(); start.setMinutes(0, 0, 0); start = addMin(start, 60);
+    const v = state.calendar?.view;
+    if (v && (start < v.activeStart || start >= v.activeEnd)) { start = new Date(v.currentStart); start.setHours(9, 0, 0, 0); }
+    end = addMin(start, 60); allDay = false;
   }
 
-  // nei giorni interi la fine è esclusiva: nel form mostro l'ultimo giorno incluso
+  form.title.value = src.title || '';
+  form.location.value = src.location || '';
+  form.description.value = src.description || '';
+  form.is_private.checked = !!src.is_private;
+  form.reminder_minutes.value = src.reminder_minutes ?? '';
+
   const shownEnd = allDay ? addDays(end, -1) : end;
   form.all_day.checked = allDay;
   form.start_date.value = dateStr(start);
   form.start_time.value = allDay ? '09:00' : timeStr(start);
   form.end_date.value = dateStr(shownEnd < start ? start : shownEnd);
   form.end_time.value = allDay ? '10:00' : timeStr(end);
+  lastStart = readStart();
   setTimeVisibility();
 
-  $('#event-dialog-title').textContent = row ? (mine ? 'Modifica impegno' : 'Impegno del collega') : 'Nuovo impegno';
-  const owner = row && !mine ? state.profiles.get(row.owner_id) : null;
-  $('#event-owner').hidden = !owner;
-  $('#event-owner').textContent = owner ? `Di ${owner.display_name}` : '';
+  form.repeat_freq.innerHTML = '';
+  repeatOptions(start);
+  form.repeat_freq.value = src.repeat_freq || '';
+  form.repeat_interval.value = src.repeat_interval || 1;
+  form.repeat_until.value = src.repeat_until || '';
+  updateRepeatExtra();
 
-  form.querySelectorAll('input, textarea').forEach((el) => (el.disabled = !mine));
-  $('#event-save').hidden = !mine;
-  $('#event-delete').hidden = !(row && mine);
+  buildColorPicker($('#color-pick'), 'ecolor', true, state.profile.color);
+  setColor($('#color-pick'), src.color || '');
+
+  $('#series-note').hidden = !(row && row.repeat_freq);
+  $('#event-dialog-title').textContent = row ? 'Modifica impegno' : 'Nuovo impegno';
   $('#event-dialog').showModal();
+  setTimeout(() => form.title.focus(), 30);
 }
 
 $('#event-cancel').addEventListener('click', () => $('#event-dialog').close());
+$('#event-x').addEventListener('click', () => $('#event-dialog').close());
 
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -817,15 +1465,10 @@ form.addEventListener('submit', async (e) => {
   if (allDay) {
     start = new Date(`${form.start_date.value}T00:00`);
     end = addDays(new Date(`${form.end_date.value}T00:00`), 1);
-  } else {
-    start = new Date(`${form.start_date.value}T${form.start_time.value}`);
-    end = new Date(`${form.end_date.value}T${form.end_time.value}`);
-  }
-  if (!(end > start)) {
-    $('#event-msg').textContent = 'La fine deve essere dopo l\'inizio.';
-    return;
-  }
-
+  } else { start = readStart(); end = readEnd(); }
+  if (!(end > start)) { $('#event-msg').textContent = "La fine deve essere dopo l'inizio."; return; }
+  const freq = form.repeat_freq.value || null;
+  const reminder = form.reminder_minutes.value === '' ? null : Number(form.reminder_minutes.value);
   const payload = {
     title: form.title.value.trim(),
     location: form.location.value.trim(),
@@ -834,47 +1477,177 @@ form.addEventListener('submit', async (e) => {
     all_day: allDay,
     start_at: start.toISOString(),
     end_at: end.toISOString(),
+    color: $('#color-pick input:checked')?.value || null,
+    repeat_freq: freq,
+    repeat_interval: freq ? Math.max(1, Math.min(99, Number(form.repeat_interval.value) || 1)) : 1,
+    repeat_until: freq && form.repeat_until.value ? form.repeat_until.value : null,
+    reminder_minutes: reminder,
   };
-
+  if (!freq) payload.repeat_except = [];
   $('#event-save').disabled = true;
   const { error } = state.editing
     ? await sb.from('events').update(payload).eq('id', state.editing.id)
     : await sb.from('events').insert(payload);
   $('#event-save').disabled = false;
-
   if (error) { $('#event-msg').textContent = errText(error); return; }
   $('#event-dialog').close();
   state.calendar.refetchEvents();
+  toast(state.editing ? 'Impegno aggiornato' : 'Impegno salvato');
+  if (reminder != null) askNotifyPermission();
 });
 
-$('#event-delete').addEventListener('click', async () => {
-  if (!state.editing || !confirm('Eliminare questo impegno?')) return;
-  const { error } = await sb.from('events').delete().eq('id', state.editing.id);
-  if (error) { $('#event-msg').textContent = errText(error); return; }
-  $('#event-dialog').close();
-  state.calendar.refetchEvents();
-});
-
+$('#create-btn').addEventListener('click', () => openEventDialog(null, null));
 $('#fab').addEventListener('click', () => openEventDialog(null, null));
 
-// ================================================================== REALTIME
+// =====================================================================
+//  RICERCA
+// =====================================================================
+function openSearch() {
+  $('#topbar').classList.add('searching');
+  $('#search-form').style.display = 'flex';
+  $('#search-btn').hidden = true;
+  $('#search-input').focus();
+}
+function closeSearch() {
+  $('#topbar').classList.remove('searching');
+  $('#search-form').style.display = '';
+  $('#search-btn').hidden = false;
+  $('#search-input').value = '';
+  $('#search-results').hidden = true;
+}
+$('#search-btn').addEventListener('click', openSearch);
+$('#search-close').addEventListener('click', closeSearch);
+$('#search-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const q = $('#search-input').value.replace(/[,()"*%\\]/g, ' ').trim();
+  if (!q) return;
+  const like = `*${q}*`;
+  const { data, error } = await sb.from('events').select('*')
+    .or(`title.ilike."${like}",location.ilike."${like}",description.ilike."${like}"`)
+    .order('start_at', { ascending: false }).limit(100);
+  if (error) return toast(errText(error), true);
+  const team = new Set(state.members.map((m) => m.user_id));
+  const rows = data.filter((r) => r.owner_id === state.user.id || team.has(r.owner_id));
+  const box = $('#search-results');
+  box.innerHTML = `<div class="res-head"><button class="icon-btn" id="res-back" title="Indietro">${ic('left')}</button>
+    <h2>Risultati per “${esc(q)}”</h2><span class="muted small">${rows.length}</span></div>` +
+    (rows.length ? '' : '<p class="muted">Nessun impegno trovato.</p>') +
+    rows.map((r, i) => {
+      const s = new Date(r.start_at);
+      const color = r.owner_id === state.user.id ? (r.color || state.profile.color) : (state.profiles.get(r.owner_id)?.color || '#616161');
+      return `<div class="res" data-i="${i}"><span class="d">${esc(F_DAYYEAR.format(s))}</span><span class="dot" style="background:${color}"></span>
+        <span><b style="font-weight:500">${esc(r.title)}</b> <span class="muted small">${r.all_day ? 'tutto il giorno' : timeStr(s)}${r.location ? ' · ' + esc(r.location) : ''}${r.repeat_freq ? ' · ricorrente' : ''}</span></span></div>`;
+    }).join('');
+  box.hidden = false;
+  $('#res-back').onclick = closeSearch;
+  $$('.res', box).forEach((el) => el.addEventListener('click', () => {
+    const r = rows[Number(el.dataset.i)];
+    box.hidden = true;
+    state.calendar.changeView(isMobile() ? 'timeGridDay' : 'timeGridWeek', r.start_at);
+  }));
+});
+
+// =====================================================================
+//  PROMEMORIA (notifiche del browser, con la pagina aperta)
+// =====================================================================
+function updateNotifyLabel() {
+  const l = $('#notify-label');
+  if (!('Notification' in window)) { l.textContent = 'Notifiche non supportate'; return; }
+  l.textContent = Notification.permission === 'granted' ? 'Notifiche attive' : Notification.permission === 'denied' ? 'Notifiche bloccate dal browser' : 'Attiva notifiche';
+}
+async function askNotifyPermission() {
+  if (!('Notification' in window) || Notification.permission !== 'default') return;
+  try { await Notification.requestPermission(); } catch {}
+  updateNotifyLabel();
+}
+$('#menu-notify').addEventListener('click', async () => {
+  closeMenus();
+  if (!('Notification' in window)) return toast('Questo browser non supporta le notifiche', true);
+  if (Notification.permission === 'denied') return toast('Notifiche bloccate: riattivale dalle impostazioni del sito nel browser', true);
+  await askNotifyPermission();
+  if (Notification.permission === 'granted') toast('Notifiche attive: arrivano finché il calendario è aperto');
+});
+
+async function checkReminders() {
+  if (!state.user) return;
+  const now = new Date();
+  const from = addDays(now, -1), to = addDays(now, 8);
+  const { data, error } = await queryEvents(from, to, (q) => q.eq('owner_id', state.user.id).not('reminder_minutes', 'is', null));
+  if (error || !data) return;
+  const fired = store.get('rc.fired', {});
+  for (const ev of data) {
+    for (const o of occurrences(ev, from, to)) {
+      const at = addMin(o.start, -ev.reminder_minutes);
+      const key = `${ev.id}|${o.start.toISOString()}`;
+      if (now >= at && now - at < 15 * 60000 && !fired[key]) {
+        fired[key] = Date.now();
+        const body = ev.all_day ? 'Tutto il giorno' : `${timeStr(o.start)} – ${timeStr(o.end)}${ev.location ? ' · ' + ev.location : ''}`;
+        if ('Notification' in window && Notification.permission === 'granted') {
+          try { new Notification(ev.title, { body, tag: key, icon: LOGO }); } catch {}
+        }
+        toast(`🔔 ${ev.title} — ${body}`);
+      }
+    }
+  }
+  for (const k in fired) if (Date.now() - fired[k] > 8 * 86400000) delete fired[k];
+  store.set('rc.fired', fired);
+}
+setInterval(checkReminders, 30000);
+
+// =====================================================================
+//  REALTIME
+// =====================================================================
 function subscribeRealtime() {
   if (state.channel) sb.removeChannel(state.channel);
-  let t;
+  let t, tm;
   const refetch = () => { clearTimeout(t); t = setTimeout(() => state.calendar?.refetchEvents(), 300); };
-  let tm;
   const reloadTeams = () => { clearTimeout(tm); tm = setTimeout(loadTeams, 300); };
-
   state.channel = sb.channel('rc-live')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, refetch)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'team_members' }, reloadTeams)
     .subscribe();
 }
-
-// quando l'app torna in primo piano (telefono) ricarico
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && state.user) state.calendar?.refetchEvents();
+  if (document.visibilityState === 'visible' && state.user) { state.calendar?.refetchEvents(); checkReminders(); }
 });
+
+// =====================================================================
+//  TASTIERA E GESTI
+// =====================================================================
+document.addEventListener('keydown', (e) => {
+  if (!state.user || !state.calendar) return;
+  if (e.key === 'Escape') { closePopovers(); closeMenus(); if (!$('#search-results').hidden) closeSearch(); return; }
+  if (e.target.closest('input, textarea, select, dialog') || e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  const view = VIEWS.find((v) => v[2] === k);
+  if (view) { state.calendar.changeView(view[0]); e.preventDefault(); return; }
+  switch (k) {
+    case 't': state.calendar.today(); break;
+    case 'c': openEventDialog(null, null); break;
+    case '/': openSearch(); break;
+    case 'arrowleft': case 'j': case 'p': state.calendar.prev(); break;
+    case 'arrowright': case 'k': case 'n': state.calendar.next(); break;
+    default: return;
+  }
+  e.preventDefault();
+});
+
+// scorrimento laterale col dito per cambiare periodo
+(() => {
+  let sx = 0, sy = 0, st = 0;
+  const el = $('#calendar');
+  el.addEventListener('touchstart', (e) => { const t = e.touches[0]; sx = t.clientX; sy = t.clientY; st = Date.now(); }, { passive: true });
+  el.addEventListener('touchend', (e) => {
+    const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+    if (Date.now() - st < 600 && Math.abs(dx) > 70 && Math.abs(dy) < 60 && state.calendar) dx < 0 ? state.calendar.next() : state.calendar.prev();
+  }, { passive: true });
+})();
+
+addEventListener('resize', () => {
+  if (!isMobile()) { $('#left').classList.remove('open'); $('#right').classList.remove('open'); $('#scrim').classList.remove('show'); }
+});
+
+paintIcons();
 </script>
 </body>
 </html>
