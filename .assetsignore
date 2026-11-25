@@ -1,0 +1,11 @@
+node_modules
+dist
+.wrangler
+.git
+wrangler.jsonc
+.assetsignore
+package.json
+package-lock.json
+README.md
+src
+public
