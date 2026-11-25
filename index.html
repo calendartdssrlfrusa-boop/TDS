@@ -279,6 +279,16 @@ input.chip { padding: .2rem .5rem; }
 .q-row .t { font-variant-numeric: tabular-nums; color: var(--muted); }
 .q-row .dot { width: 8px; height: 8px; margin-right: .35rem; vertical-align: 1px; }
 
+.quick { position: relative; }
+.quick #board { top: 49px; padding: 1rem .9rem 2rem; z-index: 6; }
+.quick .board-grid { grid-template-columns: 1fr; gap: 1.4rem; }
+.board-nav { display: flex; align-items: center; gap: .2rem; margin-left: auto; }
+#today-dialog { width: min(380px, calc(100% - 1.5rem)); height: fit-content; }
+#today-dialog .big { display: flex; gap: .6rem; }
+#today-dialog .big .btn { flex: 1; justify-content: center; padding: .7rem; }
+#today-other .chips { margin-top: 0; }
+#today-other .chip { font-size: .9rem; padding: .45rem .9rem; }
+
 /* bacheca */
 .icon-btn.active { background: var(--accent-soft); color: var(--accent); }
 #board { position: absolute; inset: 0; overflow: auto; background: var(--bg); z-index: 4; padding: 1.25rem 1.5rem 2rem; }
@@ -383,6 +393,7 @@ dialog::backdrop { background: rgba(0,0,0,.35); }
   .popover { left: 0 !important; right: 0; bottom: 0; top: auto !important; width: 100%; border-radius: 24px 24px 0 0; padding-bottom: calc(1.25rem + env(safe-area-inset-bottom)); }
   .dh-n { font-size: 1.2rem; width: 36px; height: 36px; }
   dialog { width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; margin: 0; }
+  #today-dialog, dialog[style*="height:fit-content"] { margin: auto; height: fit-content; max-height: 90dvh; border-radius: 20px; width: calc(100% - 1.5rem); }
   .toast { left: 1rem; right: 1rem; bottom: 5.5rem; max-width: none; }
 }
 </style>
@@ -518,6 +529,7 @@ dialog::backdrop { background: rgba(0,0,0,.35); }
   <header class="q-head">
     <img id="logo-quick" alt=""> <b>Promemoria rapido</b> <span class="spacer"></span>
     <button class="icon-btn sm" id="q-full" title="Nuovo impegno (scheda completa)" data-ico="plus"></button>
+    <button class="icon-btn sm" id="q-board" title="Bacheca operatori" data-ico="board"></button>
     <button class="icon-btn sm" id="q-open" title="Apri il calendario completo" data-ico="external"></button>
     <button class="icon-btn sm" id="q-close" title="Chiudi (Esc)" data-ico="x" hidden></button>
   </header>
@@ -595,8 +607,36 @@ dialog::backdrop { background: rgba(0,0,0,.35); }
   </form>
 </dialog>
 
+<!-- domanda del mattino: nessun impegno oggi -->
+<dialog id="today-dialog">
+  <div class="stack">
+    <div class="row" style="justify-content:space-between">
+      <h2>Nessun impegno per oggi?</h2>
+      <button type="button" class="icon-btn sm" id="today-x" title="Più tardi" data-ico="x"></button>
+    </div>
+    <p class="muted" id="today-date" style="margin:-.4rem 0 0"></p>
+    <div class="big">
+      <button type="button" class="btn primary" id="today-add"><span data-ico="plus"></span> Aggiungi</button>
+      <button type="button" class="btn" id="today-more">Altro…</button>
+    </div>
+    <div id="today-other" class="stack" hidden>
+      <div class="chips">
+        <button type="button" class="chip" data-t="Lavoro in ditta">Lavoro in ditta</button>
+        <button type="button" class="chip" data-t="Programmazione">Programmazione</button>
+        <button type="button" class="chip" data-t="Chiamate">Chiamate</button>
+        <button type="button" class="chip" data-t="Permesso">Permesso</button>
+      </div>
+      <form id="today-form" class="row" style="flex-wrap:nowrap">
+        <input id="today-text" placeholder="Scrivi: …" maxlength="200" style="flex:1" autocomplete="off">
+        <button class="btn primary" type="submit">OK</button>
+      </form>
+    </div>
+    <p class="msg" id="today-msg"></p>
+  </div>
+</dialog>
+
 <!-- scelta per eventi ricorrenti -->
-<dialog id="series-dialog" style="width:min(380px, calc(100% - 1.5rem));height:auto">
+<dialog id="series-dialog" style="width:min(380px, calc(100% - 1.5rem));height:fit-content">
   <form method="dialog" class="stack">
     <h2>Elimina evento ricorrente</h2>
     <label class="check"><input type="radio" name="scope" value="one" checked> Solo questo evento</label>
@@ -608,7 +648,7 @@ dialog::backdrop { background: rgba(0,0,0,.35); }
   </form>
 </dialog>
 
-<dialog id="ask-dialog" style="width:min(400px, calc(100% - 1.5rem));height:auto">
+<dialog id="ask-dialog" style="width:min(400px, calc(100% - 1.5rem));height:fit-content">
   <form method="dialog" class="stack">
     <h2 id="ask-title"></h2>
     <label><span id="ask-label"></span> <input id="ask-input" required maxlength="60"></label>
@@ -619,7 +659,7 @@ dialog::backdrop { background: rgba(0,0,0,.35); }
   </form>
 </dialog>
 
-<dialog id="profile-dialog" style="width:min(400px, calc(100% - 1.5rem));height:auto">
+<dialog id="profile-dialog" style="width:min(400px, calc(100% - 1.5rem));height:fit-content">
   <form method="dialog" class="stack" id="profile-form">
     <h2>Nome e colore</h2>
     <label>Nome visualizzato <input name="display_name" required maxlength="60"></label>
@@ -1657,7 +1697,9 @@ async function startQuick(user) {
   $('#app-view').hidden = true;
   $('#quick-view').hidden = false;
   $('#q-close').hidden = !DESKTOP;
+  state.board = false;
   await loadProfile();
+  await loadTeams();
   subscribeRealtime();
   q.selected = sod(new Date());
   q.month = new Date();
@@ -1667,7 +1709,71 @@ async function startQuick(user) {
   }
   checkReminders();
   setTimeout(() => $('#q-text').focus(), 50);
+  checkTodayEmpty();
 }
+
+// ---- bacheca dentro il pannello
+function setQuickBoard(on) {
+  state.board = !!on;
+  const b = $('#board');
+  if (b.parentElement !== $('#quick-view')) $('#quick-view').append(b);
+  b.hidden = !state.board;
+  $('#q-board').classList.toggle('active', state.board);
+  if (state.board) { state.boardDate = new Date(); renderBoard(); }
+}
+$('#q-board').addEventListener('click', () => setQuickBoard(!state.board));
+
+// ---- domanda del mattino: "Nessun impegno per oggi?"
+const ASK_WEEKDAYS = [1, 2, 3, 4, 5];   // lun-ven (0 = domenica, 6 = sabato)
+let todayAsking = false;
+async function checkTodayEmpty() {
+  if (!QUICK || !state.user || todayAsking) return;
+  const now = new Date();
+  const key = dateStr(now);
+  if (!ASK_WEEKDAYS.includes(now.getDay()) || now.getHours() < 6) return;
+  if (store.get('rc.askedDay', '') === key) return;
+  const d0 = sod(now), d1 = addDays(d0, 1);
+  const { data, error } = await queryEvents(d0, d1, (x) => x.eq('owner_id', state.user.id));
+  if (error) return;
+  if (data.some((ev) => occurrences(ev, d0, d1).length)) { store.set('rc.askedDay', key); return; }
+  todayAsking = true;
+  store.set('rc.askedDay', key);
+  DESKTOP?.postMessage(JSON.stringify({ type: 'show' }));
+  $('#today-date').textContent = cap(F_DAYLONG.format(now));
+  $('#today-other').hidden = true;
+  $('#today-msg').textContent = '';
+  $('#today-text').value = '';
+  $('#today-dialog').showModal();
+}
+// se il PC resta acceso, controlla anche il giorno dopo
+setInterval(checkTodayEmpty, 15 * 60000);
+
+$('#today-dialog').addEventListener('close', () => { todayAsking = false; });
+$('#today-x').addEventListener('click', () => $('#today-dialog').close());
+$('#today-add').addEventListener('click', () => {
+  $('#today-dialog').close();
+  q.selected = sod(new Date());
+  $('#q-full').click();
+});
+$('#today-more').addEventListener('click', () => {
+  $('#today-other').hidden = false;
+  $('#today-text').focus();
+});
+async function addTodayStatus(title) {
+  title = cleanTitle(title) || title.trim();
+  if (!title) return;
+  const d0 = sod(new Date());
+  const { error } = await sb.from('events').insert({
+    title, start_at: d0.toISOString(), end_at: addDays(d0, 1).toISOString(), all_day: true,
+  });
+  if (error) { $('#today-msg').textContent = errText(error); return; }
+  $('#today-dialog').close();
+  addMsg('bot', `✓ Aggiunto per oggi, ${F_DAYLONG.format(d0)}:\n• ${title}`, 'ok');
+  selectDay(d0);
+  if (state.board) renderBoard();
+}
+$$('#today-other [data-t]').forEach((b) => b.addEventListener('click', () => addTodayStatus(b.dataset.t)));
+$('#today-form').addEventListener('submit', (e) => { e.preventDefault(); addTodayStatus($('#today-text').value); });
 
 function addMsg(who, text, cls = '') {
   const b = document.createElement('div');
@@ -2002,6 +2108,7 @@ $('#q-full').addEventListener('click', () => {
 $('#q-open').addEventListener('click', () => window.open(BASE_URL, '_blank'));
 $('#q-close').addEventListener('click', () => DESKTOP?.postMessage(JSON.stringify({ type: 'close' })));
 document.addEventListener('keydown', (e) => {
+  if (QUICK && e.key === 'Escape' && state.board && !document.querySelector('dialog[open]')) { setQuickBoard(false); return; }
   if (QUICK && e.key === 'Escape' && DESKTOP && !document.querySelector('dialog[open]')) DESKTOP.postMessage(JSON.stringify({ type: 'close' }));
 });
 
@@ -2104,10 +2211,19 @@ async function renderBoard() {
   const team = currentTeam();
   $('#board').innerHTML = `
     <div class="board-head"><h2>${cap(F_DAYLONG.format(d0))}</h2>
-      <span class="muted small">${team ? esc(team.name) + ' · ' : ''}${ops.length} operator${ops.length === 1 ? 'e' : 'i'}</span></div>
+      <span class="muted small">${team ? esc(team.name) + ' · ' : ''}${ops.length} operator${ops.length === 1 ? 'e' : 'i'}</span>
+      ${QUICK ? `<span class="board-nav"><button class="icon-btn sm" data-bn="-1" title="Giorno prima">${ic('left')}</button>
+        <button class="btn small" data-bn="0">Oggi</button>
+        <button class="icon-btn sm" data-bn="1" title="Giorno dopo">${ic('right')}</button></span>` : ''}</div>
     <div class="board-grid">${cards}</div>
     ${state.teams.length ? '' : '<p class="muted small" style="margin-top:1.5rem">Crea o entra in un gruppo (pannello a destra) per vedere anche i colleghi.</p>'}`;
+  $$('[data-bn]', $('#board')).forEach((b) => b.addEventListener('click', () => {
+    const n = Number(b.dataset.bn);
+    state.boardDate = n === 0 ? new Date() : addDays(state.boardDate, n);
+    renderBoard();
+  }));
   $$('.st-item', $('#board')).forEach((el) => el.addEventListener('click', () => {
+    if (QUICK) { setQuickBoard(false); selectDay(new Date(el.dataset.d + 'T00:00')); return; }
     setBoard(false);
     state.calendar.changeView('timeGridDay', el.dataset.d);
   }));
