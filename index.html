@@ -297,6 +297,42 @@ input.chip { padding: .2rem .5rem; }
 #today-other .chips { margin-top: 0; }
 #today-other .chip { font-size: .9rem; padding: .45rem .9rem; }
 
+/* ALLERTE */
+.alert-btn { position: relative; width: 40px; height: 40px; border-radius: 50%; border: 0; background: transparent; cursor: pointer; display: inline-grid; place-items: center; color: #d93025; flex: none; }
+.alert-btn:hover { background: rgba(217,48,37,.1); }
+.alert-btn .ico { width: 24px; height: 24px; stroke-width: 2.3; position: relative; z-index: 1; }
+.alert-btn.none { color: var(--muted); opacity: .7; }
+.alert-btn .badge-n { position: absolute; top: 2px; right: 0; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #d93025; color: #fff; font-size: .68rem; font-weight: 700; display: grid; place-items: center; z-index: 2; }
+.alert-btn.blink .ico { animation: al-blink 1s ease-in-out infinite; }
+@keyframes al-blink { 0%, 100% { opacity: 1; } 50% { opacity: .15; } }
+.alert-btn.waves::before, .alert-btn.waves::after {
+  content: ""; position: absolute; inset: 6px; border-radius: 50%; border: 3px solid #d93025;
+  animation: al-wave 1.8s ease-out infinite; pointer-events: none;
+}
+.alert-btn.waves::after { animation-delay: .9s; }
+@keyframes al-wave { 0% { transform: scale(.6); opacity: .9; } 100% { transform: scale(1.9); opacity: 0; } }
+.q-head .alert-btn { width: 34px; height: 34px; }
+.q-head .alert-btn .ico { width: 20px; height: 20px; }
+
+#alert-dialog { width: min(520px, calc(100% - 1.5rem)); height: fit-content; max-height: calc(100dvh - 2rem); }
+#alert-dialog h2 { color: #d93025; display: flex; align-items: center; gap: .5rem; }
+#alert-form { display: flex; flex-direction: column; gap: .5rem; }
+#alert-form textarea { border-color: #f1998e; }
+.al-list { display: flex; flex-direction: column; gap: .6rem; }
+.al-item { border: 1px solid #f6c5bf; background: #fdecea; border-left: 5px solid #d93025; border-radius: 10px; padding: .7rem .85rem; }
+@media (prefers-color-scheme: dark) { .al-item { background: #3c1512; border-color: #6b2620; } }
+.al-item.old { animation: al-glow 1.6s ease-in-out infinite; }
+@keyframes al-glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(217,48,37,.0); } 50% { box-shadow: 0 0 0 5px rgba(217,48,37,.25); } }
+.al-item.done { background: var(--surface); border-color: var(--line); border-left-color: #1e8e3e; opacity: .8; }
+.al-msg { white-space: pre-wrap; word-break: break-word; font-weight: 500; }
+.al-meta { font-size: .78rem; color: var(--muted); margin-top: .3rem; display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+.al-meta .spacer { flex: 1; }
+.al-age { color: #d93025; font-weight: 700; }
+#alert-popup { width: min(460px, calc(100% - 1.5rem)); height: fit-content; padding: 0; overflow: hidden; border: 3px solid #d93025; }
+#alert-popup .al-pop-head { background: #d93025; color: #fff; padding: .9rem 1.2rem; font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: .6rem; }
+#alert-popup .al-pop-body { padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: .75rem; max-height: 60dvh; overflow: auto; }
+#alert-popup .al-pop-foot { padding: 0 1.2rem 1.1rem; display: flex; gap: .5rem; justify-content: flex-end; }
+
 /* bacheca */
 .icon-btn.active { background: var(--accent-soft); color: var(--accent); }
 #board { position: absolute; inset: 0; overflow: auto; background: var(--bg); z-index: 4; padding: 1.25rem 1.5rem 2rem; }
@@ -474,6 +510,7 @@ dialog::backdrop { background: rgba(0,0,0,.35); }
       <option value="multiMonthYear">Anno</option>
       <option value="listMonth">Programma</option>
     </select>
+    <button class="alert-btn none" data-alert-btn title="Allerte" aria-label="Allerte"><span data-ico="siren"></span></button>
     <button class="icon-btn" id="board-btn" title="Bacheca operatori (B)" data-ico="board"></button>
     <button class="icon-btn" id="team-btn" title="Gruppo di lavoro" data-ico="users"></button>
     <button class="avatar" id="avatar-btn" title="Account"></button>
@@ -566,6 +603,7 @@ dialog::backdrop { background: rgba(0,0,0,.35); }
   <header class="q-head">
     <img id="logo-quick" alt=""> <b>Promemoria rapido</b> <span class="spacer"></span>
     <button class="icon-btn sm" id="q-full" title="Nuovo impegno (scheda completa)" data-ico="plus"></button>
+    <button class="alert-btn none" data-alert-btn title="Allerte" aria-label="Allerte"><span data-ico="siren"></span></button>
     <button class="icon-btn sm" id="q-board" title="Bacheca operatori" data-ico="board"></button>
     <button class="icon-btn sm" id="q-open" title="Apri il calendario completo" data-ico="external"></button>
     <button class="icon-btn sm" id="q-close" title="Chiudi (Esc)" data-ico="x" hidden></button>
@@ -642,6 +680,36 @@ dialog::backdrop { background: rgba(0,0,0,.35); }
       <button class="btn primary" type="submit" id="event-save">Salva</button>
     </div>
   </form>
+</dialog>
+
+<!-- ALLERTE: elenco e nuova allerta -->
+<dialog id="alert-dialog">
+  <div class="stack">
+    <div class="row" style="justify-content:space-between">
+      <h2><span data-ico="siren"></span> Allerte</h2>
+      <button type="button" class="icon-btn sm" id="alert-x" title="Chiudi" data-ico="x"></button>
+    </div>
+    <form id="alert-form">
+      <textarea id="alert-text" rows="3" maxlength="1000" placeholder="Scrivi una cosa grave da far sapere a tutti… (es. manca la carta per la stampante fiscale)"></textarea>
+      <div class="row" style="justify-content:flex-end">
+        <button class="btn primary" type="submit" style="background:#d93025;border-color:#d93025;color:#fff">Invia allerta a tutti</button>
+      </div>
+    </form>
+    <h3>Aperte</h3>
+    <div class="al-list" id="alert-open"></div>
+    <h3 id="alert-done-h">Risolte negli ultimi 7 giorni</h3>
+    <div class="al-list" id="alert-done"></div>
+  </div>
+</dialog>
+
+<!-- ALLERTE: popup quando ne arriva una nuova -->
+<dialog id="alert-popup">
+  <div class="al-pop-head"><span data-ico="siren"></span> <span id="alert-pop-title">ALLERTA</span></div>
+  <div class="al-pop-body" id="alert-pop-body"></div>
+  <div class="al-pop-foot">
+    <button type="button" class="btn" id="alert-pop-open">Vedi tutte</button>
+    <button type="button" class="btn primary" id="alert-pop-ok" style="background:#d93025;border-color:#d93025;color:#fff">Ho letto</button>
+  </div>
 </dialog>
 
 <!-- domanda del mattino: nessun impegno oggi -->
@@ -763,6 +831,7 @@ const ICONS = {
   board: '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
   send: '<path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4Z"/>',
   external: '<path d="M15 3h6v6M10 14 21 3M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/>',
+  siren: '<path d="M7 18v-6a5 5 0 0 1 10 0v6"/><path d="M5 21a1 1 0 0 1-1-1v-1a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1a1 1 0 0 1-1 1z"/><path d="M21 12h1M18.5 4.5 18 5M2 12h1M12 2v1M4.93 4.93l.71.71M12 9v4"/>',
   logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
 };
 const ic = (name, cls = 'ico') => `<svg class="${cls}" viewBox="0 0 24 24">${ICONS[name] || ''}</svg>`;
@@ -987,6 +1056,7 @@ async function startApp(user) {
   updateNotifyLabel();
   checkReminders();
   openFromHash();
+  loadAlerts();
 }
 
 // apertura da link esterno: #nuovo oppure #nuovo=2026-11-26
@@ -1841,6 +1911,7 @@ async function startQuick(user) {
   checkReminders();
   setTimeout(() => $('#q-text').focus(), 50);
   checkTodayEmpty();
+  loadAlerts();
 }
 
 // ---- bacheca dentro il pannello
@@ -2101,6 +2172,16 @@ async function handleMessage(text) {
   addMsg('me', text);
   if (q.pending) q.pending.done(null);
 
+  // "ALLERT manca la carta..." -> allerta per tutto il gruppo
+  const am = text.match(ALERT_RE);
+  if (am) {
+    const msg = cap(am[1].trim());
+    if (!msg) { openAlerts(); addMsg('bot', 'Scrivi cosa succede, es. "ALLERT manca la carta della stampante".'); return; }
+    const err = await sendAlert(msg);
+    addMsg('bot', err ? 'Non sono riuscito a inviare l\'allerta: ' + err : `🚨 Allerta inviata a tutto il gruppo:\n${msg}`, err ? '' : 'ok');
+    return;
+  }
+
   // più cose separate da virgola, punto e virgola, a capo o "poi"
   const parts = text.split(/\s*(?:[,;\n]+|\s+poi\s+)\s*/i).map((x) => x.trim()).filter(Boolean);
   const groups = [];
@@ -2279,6 +2360,156 @@ document.addEventListener('keydown', (e) => {
   if (QUICK && e.key === 'Escape' && state.board && !document.querySelector('dialog[open]')) { setQuickBoard(false); return; }
   if (QUICK && e.key === 'Escape' && DESKTOP && !document.querySelector('dialog[open]')) DESKTOP.postMessage(JSON.stringify({ type: 'close' }));
 });
+
+// =====================================================================
+//  ALLERTE (avvisi gravi per tutto il gruppo)
+// =====================================================================
+const ALERT_RE = /^\s*(?:allert[ae]?|alert|allarme)\b[\s:!,.\-–]*([\s\S]*)$/i;
+state.alerts = [];
+
+const ago = (d) => {
+  const m = Math.round((Date.now() - d) / 60000);
+  if (m < 1) return 'adesso';
+  if (m < 60) return `${m} min fa`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h} ${h === 1 ? 'ora' : 'ore'} fa`;
+  const g = Math.floor(h / 24);
+  return `${g} ${g === 1 ? 'giorno' : 'giorni'} fa`;
+};
+const authorName = (id) => id === state.user?.id ? 'Tu' : (state.profiles.get(id)?.display_name || 'Amministrazione');
+
+async function loadAlerts() {
+  if (!state.user) return;
+  const since = new Date(Date.now() - 7 * 86400000).toISOString();
+  const { data, error } = await sb.from('alerts').select('*')
+    .or(`resolved_at.is.null,resolved_at.gte."${since}"`)
+    .order('created_at', { ascending: false }).limit(200);
+  if (error) { console.warn('allerte:', error.message); return; }
+  state.alerts = data;
+  renderAlertButtons();
+  if ($('#alert-dialog').open) renderAlertList();
+  checkNewAlerts();
+}
+
+function renderAlertButtons() {
+  const open = state.alerts.filter((a) => !a.resolved_at);
+  const now = Date.now();
+  const recent = open.some((a) => now - new Date(a.created_at) < 86400000);
+  const old = open.some((a) => now - new Date(a.created_at) > 3 * 86400000);
+  $$('[data-alert-btn]').forEach((b) => {
+    b.classList.toggle('none', open.length === 0);
+    b.classList.toggle('blink', recent);
+    b.classList.toggle('waves', old);
+    b.title = open.length ? `${open.length} allert${open.length === 1 ? 'a aperta' : 'e aperte'}` : 'Allerte';
+    let n = b.querySelector('.badge-n');
+    if (open.length) {
+      if (!n) { n = document.createElement('span'); n.className = 'badge-n'; b.append(n); }
+      n.textContent = open.length;
+    } else n?.remove();
+  });
+}
+setInterval(renderAlertButtons, 60000);
+
+function alertItem(a) {
+  const age = Date.now() - new Date(a.created_at);
+  const old = !a.resolved_at && age > 3 * 86400000;
+  const mine = a.author_id === state.user.id;
+  const admin = state.profile?.role === 'admin';
+  const el = document.createElement('div');
+  el.className = `al-item ${a.resolved_at ? 'done' : ''} ${old ? 'old' : ''}`;
+  el.innerHTML = `<div class="al-msg">${esc(a.message)}</div>
+    <div class="al-meta"><span>${esc(authorName(a.author_id))}</span>·<span class="${old ? 'al-age' : ''}">${ago(new Date(a.created_at))}</span>
+      ${a.resolved_at ? `· <span>✓ risolta da ${esc(authorName(a.resolved_by))} ${ago(new Date(a.resolved_at))}</span>` : ''}
+      <span class="spacer"></span>
+      ${a.resolved_at ? '' : '<button class="btn small" data-a="ok">✓ Risolto</button>'}
+      ${mine || admin ? '<button class="btn small danger" data-a="del">Elimina</button>' : ''}</div>`;
+  el.querySelector('[data-a=ok]')?.addEventListener('click', async () => {
+    const { error } = await sb.from('alerts').update({ resolved_at: new Date().toISOString(), resolved_by: state.user.id }).eq('id', a.id);
+    if (error) return toast(errText(error), true);
+    loadAlerts();
+  });
+  el.querySelector('[data-a=del]')?.addEventListener('click', async () => {
+    if (!confirm('Eliminare questa allerta?')) return;
+    const { error } = await sb.from('alerts').delete().eq('id', a.id);
+    if (error) return toast(errText(error), true);
+    loadAlerts();
+  });
+  return el;
+}
+
+function renderAlertList() {
+  const open = state.alerts.filter((a) => !a.resolved_at);
+  const done = state.alerts.filter((a) => a.resolved_at);
+  const bo = $('#alert-open'), bd = $('#alert-done');
+  bo.innerHTML = open.length ? '' : '<p class="muted small" style="margin:0">Nessuna allerta aperta. 👍</p>';
+  open.forEach((a) => bo.append(alertItem(a)));
+  bd.innerHTML = '';
+  done.forEach((a) => bd.append(alertItem(a)));
+  $('#alert-done-h').hidden = !done.length;
+}
+
+function openAlerts() {
+  closeMenus?.();
+  renderAlertList();
+  $('#alert-dialog').showModal();
+  setTimeout(() => $('#alert-text').focus(), 30);
+}
+document.addEventListener('click', (e) => { if (e.target.closest('[data-alert-btn]')) openAlerts(); });
+$('#alert-x').addEventListener('click', () => $('#alert-dialog').close());
+
+async function sendAlert(message) {
+  const { error } = await sb.from('alerts').insert({ message: message.trim() });
+  if (error) return errText(error);
+  await loadAlerts();
+  return null;
+}
+$('#alert-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const txt = $('#alert-text').value.trim();
+  if (!txt) return;
+  const err = await sendAlert(txt);
+  if (err) return toast(err, true);
+  $('#alert-text').value = '';
+  toast('🚨 Allerta inviata a tutto il gruppo');
+});
+$('#alert-text').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) $('#alert-form').requestSubmit();
+});
+
+// popup + notifica per le allerte nuove degli altri
+function checkNewAlerts() {
+  const seen = new Set(store.get('rc.alertsSeen', []));
+  const fresh = state.alerts.filter((a) => !a.resolved_at && a.author_id !== state.user.id && !seen.has(a.id)
+    && Date.now() - new Date(a.created_at) < 7 * 86400000);
+  if (!fresh.length) return;
+  const notified = new Set(store.get('rc.alertsNotified', []));
+  for (const a of fresh) {
+    if (notified.has(a.id)) continue;
+    notified.add(a.id);
+    const title = `🚨 ALLERTA da ${authorName(a.author_id)}`;
+    if (DESKTOP) DESKTOP.postMessage(JSON.stringify({ type: 'notify', title, body: a.message }));
+    else if ('Notification' in window && Notification.permission === 'granted') { try { new Notification(title, { body: a.message, tag: 'al-' + a.id, requireInteraction: true }); } catch {} }
+  }
+  store.set('rc.alertsNotified', [...notified].slice(-300));
+  DESKTOP?.postMessage(JSON.stringify({ type: 'show' }));
+
+  $('#alert-pop-title').textContent = fresh.length === 1 ? 'ALLERTA' : `${fresh.length} ALLERTE`;
+  const body = $('#alert-pop-body');
+  body.innerHTML = '';
+  fresh.forEach((a) => {
+    const el = document.createElement('div');
+    el.innerHTML = `<div class="al-msg" style="font-size:1.05rem">${esc(a.message)}</div>
+      <div class="al-meta">${esc(authorName(a.author_id))} · ${ago(new Date(a.created_at))}</div>`;
+    body.append(el);
+  });
+  const markSeen = () => {
+    fresh.forEach((a) => seen.add(a.id));
+    store.set('rc.alertsSeen', [...seen].slice(-500));
+  };
+  $('#alert-pop-ok').onclick = () => { markSeen(); $('#alert-popup').close(); };
+  $('#alert-pop-open').onclick = () => { markSeen(); $('#alert-popup').close(); openAlerts(); };
+  if (!$('#alert-popup').open) $('#alert-popup').showModal();
+}
 
 // =====================================================================
 //  BACHECA OPERATORI (post-it: oggi + domani per ogni persona)
@@ -2504,16 +2735,17 @@ setInterval(checkReminders, 30000);
 // =====================================================================
 function subscribeRealtime() {
   if (state.channel) sb.removeChannel(state.channel);
-  let t, tm;
+  let t, tm, ta;
   const refetch = () => { clearTimeout(t); t = setTimeout(() => { state.calendar?.refetchEvents(); if (state.board) renderBoard(); if (QUICK) qLoad(); }, 300); };
   const reloadTeams = () => { clearTimeout(tm); tm = setTimeout(loadTeams, 300); };
   state.channel = sb.channel('rc-live')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, refetch)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'team_members' }, reloadTeams)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'alerts' }, () => { clearTimeout(ta); ta = setTimeout(loadAlerts, 300); })
     .subscribe();
 }
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && state.user) { state.calendar?.refetchEvents(); checkReminders(); }
+  if (document.visibilityState === 'visible' && state.user) { state.calendar?.refetchEvents(); checkReminders(); loadAlerts(); }
 });
 
 // =====================================================================
