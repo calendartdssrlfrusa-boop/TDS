@@ -729,6 +729,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
 // modalità: pagina normale, oppure pannello rapido (#rapido) aperto dal programma PC
 const QUICK = /^#rapido/i.test(location.hash);
 const DESKTOP = window.chrome?.webview || null;   // presente solo dentro il programma PC
+const ANDROID = window.RenkoApp?.notify ? window.RenkoApp : null;   // presente solo dentro l'app Android
 const BASE_URL = location.origin + location.pathname;
 if (QUICK) document.title = 'Renko · Rapido';
 
@@ -1935,18 +1936,20 @@ function nextWeekdays(wd, n = 3) {
 function parseDateSpec(text) {
   let t = text;
   const today = sod(new Date());
-  const take = (re, fn) => {
+  const take = (re, fn, keep = false) => {
     const m = t.match(re);
     if (!m) return null;
     const v = fn(m);
     if (!v) return null;
-    t = t.slice(0, m.index) + ' ' + t.slice(m.index + m[0].length);
+    if (!keep) t = t.slice(0, m.index) + ' ' + t.slice(m.index + m[0].length);
     return v;
   };
   const tries = [
     () => take(new RegExp('\\b(?:per\\s+)?dopodomani' + END, 'i'), () => ({ date: addDays(today, 2) })),
-    () => take(new RegExp('\\b(?:per\\s+|da\\s+)?domani(?:\\s+mattina|\\s+pomeriggio|\\s+sera)?' + END, 'i'), () => ({ date: addDays(today, 1) })),
-    () => take(new RegExp('\\b(?:per\\s+)?(?:oggi(?:\\s+pomeriggio)?|stamattina|stamani|stasera|stanotte)' + END, 'i'), () => ({ date: today })),
+    () => take(new RegExp('\\b(?:per\\s+|da\\s+)?domani' + END, 'i'), () => ({ date: addDays(today, 1) })),
+    () => take(new RegExp('\\b(?:per\\s+)?oggi' + END, 'i'), () => ({ date: today })),
+    // la parola resta: serve anche per la fascia oraria
+    () => take(/\b(?:stamattina|stamani|stasera|stanotte)\b/i, () => ({ date: today }), true),
     () => take(/\b(?:tra|fra)\s+(\d+|un[oa]?|due|tre|quattro|cinque|sei|sette|otto|nove|dieci)\s+(giorn[oi]|settiman[ae]|mes[ei])\b/i, (m) => {
       const n = /^\d+$/.test(m[1]) ? +m[1] : NUMWORDS[m[1].toLowerCase()];
       const u = m[2][0].toLowerCase();
@@ -1954,7 +1957,8 @@ function parseDateSpec(text) {
       if (u === 's') return { date: addDays(today, 7 * n) };
       const d = new Date(today); d.setMonth(d.getMonth() + n); return { date: d };
     }),
-    () => take(/\b(?:il\s+|per\s+il\s+|entro\s+il\s+)?(\d{1,2})[\/-](\d{1,2})(?:[\/-](\d{2,4}))?\b/, (m) => {
+    () => take(/\b(?:il\s+|per\s+il\s+|entro\s+il\s+)?(\d{1,2})(?:\/(\d{1,2})(?:\/(\d{2,4}))?|-(\d{1,2})-(\d{2,4}))\b/, (m) => {
+      if (m[4]) { m = [m[0], m[1], m[4], m[5]]; }
       let y = m[3] ? +m[3] : today.getFullYear();
       if (y < 100) y += 2000;
       const d = new Date(y, +m[2] - 1, +m[1]);
@@ -1988,24 +1992,58 @@ function parseDateSpec(text) {
 }
 
 // ---- riconoscimento dell'orario
+// Fasce orarie (modificabili): [espressione, inizio, fine, mattina/pomeriggio]
+const PERIODS = [
+  [/\b(?:di\s+|in\s+|la\s+)?prima\s+mattin(?:a|ata)\b/i, [8, 0], [9, 30], 'am'],
+  [/\b(?:in\s+|la\s+)?tarda\s+mattin(?:a|ata)\b/i, [11, 30], [13, 0], 'am'],
+  [/\b(?:nel\s+|di\s+|il\s+|al\s+)?primo\s+pomeriggio\b/i, [14, 0], [15, 30], 'pm'],
+  [/\b(?:nel\s+|di\s+|il\s+|al\s+)?tardo\s+pomeriggio\b/i, [17, 0], [19, 0], 'pm'],
+  [/\b(?:di\s+|in\s+|la\s+|al(?:la)?\s+)?(?:mattin(?:a|ata)|stamattina|stamani)\b/i, [9, 0], [13, 0], 'am'],
+  [/\b(?:nel\s+|di\s+|il\s+|al\s+)?pomeriggio\b/i, [14, 0], [18, 0], 'pm'],
+  [/\b(?:di\s+|in\s+|la\s+|alla\s+)?(?:serata|sera|stasera|stanotte)\b/i, [20, 0], [22, 0], 'pm'],
+];
+
 function parseTime(text) {
-  let t = text, start = null, end = null;
+  let t = text, start = null, end = null, half = null;
   const hm = (h, mi) => (h >= 0 && h < 24 && mi >= 0 && mi < 60 ? [h, mi] : null);
   const cut = (m) => { t = t.slice(0, m.index) + ' ' + t.slice(m.index + m[0].length); };
-  let m = t.match(/\b(?:dalle(?:\s+ore)?|dall['’])\s*(\d{1,2})(?:[:.](\d{2}))?\s*(?:alle|all['’]|-|a)\s*(\d{1,2})(?:[:.](\d{2}))?\b/i)
-       || t.match(/\b(\d{1,2})[:.](\d{2})\s*[-–]\s*(\d{1,2})[:.](\d{2})\b/);
+
+  // fascia della giornata (mattina, pomeriggio, ...)
+  let period = null;
+  for (const p of PERIODS) {
+    const m = t.match(p[0]);
+    if (m) { period = p; half = p[3]; cut(m); break; }
+  }
+
+  // intervallo: "dalle 13 alle 15", "tra le 13 e le 15", "13-15", "13:00 - 15:30"
+  let m = t.match(/\b(?:dalle(?:\s+ore)?|dall['’]|tra\s+le|fra\s+le)\s*(\d{1,2})(?:[:.](\d{2}))?\s*(?:fino\s+alle|fino\s+a|alle(?:\s+ore)?|all['’]|e\s+le|a|-|–)\s*(\d{1,2})(?:[:.](\d{2}))?\b/i)
+       || t.match(/(?:^|[^\d\/:.])(\d{1,2})(?:[:.](\d{2}))?\s*[-–]\s*(\d{1,2})(?:[:.](\d{2}))?(?![\d\/])/);
   if (m) {
     start = hm(+m[1], +(m[2] || 0)); end = hm(+m[3], +(m[4] || 0));
     if (start && end) cut(m); else start = end = null;
   }
+  // orario singolo: "alle 15", "ore 9:30", "15:30", "all'una"
   if (!start) {
-    m = t.match(/\b(?:alle(?:\s+ore)?|all['’]|ore|verso\s+le|per\s+le|h)\s*(\d{1,2})(?:[:.](\d{2}))?\b/i) || t.match(/\b(\d{1,2})[:.](\d{2})\b/);
-    if (m) { start = hm(+m[1], +(m[2] || 0)); if (start) cut(m); }
+    if ((m = t.match(/\ball['’]una\b/i))) { start = [13, 0]; cut(m); }
+    else {
+      m = t.match(/\b(?:alle(?:\s+ore)?|all['’]|ore|verso\s+le|per\s+le|dalle(?:\s+ore)?|h)\s*(\d{1,2})(?:[:.](\d{2}))?\b/i) || t.match(/\b(\d{1,2})[:.](\d{2})\b/);
+      if (m) { start = hm(+m[1], +(m[2] || 0)); if (start) cut(m); }
+    }
   }
-  if (!start && /\bmezzogiorno\b/i.test(t)) { start = [12, 0]; t = t.replace(/\b(?:a\s+)?mezzogiorno\b/i, ' '); }
-  // "alle 3" in orario di lavoro = 15:00
-  const pm = (x) => (x && x[0] >= 1 && x[0] <= 7 ? [x[0] + 12, x[1]] : x);
-  start = pm(start); end = pm(end);
+  if (!start && (m = t.match(/\b(?:a\s+)?mezzogiorno\b/i))) { start = [12, 0]; end = [13, 0]; cut(m); }
+
+  // mattina/pomeriggio: "pomeriggio alle 3" = 15:00; senza fascia "alle 3" = 15:00
+  const adj = (x) => {
+    if (!x) return x;
+    if (half === 'pm' && x[0] < 12) return [x[0] + 12, x[1]];
+    if (!half && x[0] >= 1 && x[0] <= 7) return [x[0] + 12, x[1]];
+    return x;
+  };
+  start = adj(start); end = adj(end);
+  if (start && end && (end[0] * 60 + end[1]) <= (start[0] * 60 + start[1]) && end[0] < 12) end = [end[0] + 12, end[1]];
+
+  // solo la fascia: orari della fascia
+  if (!start && period) { start = period[1]; end = period[2]; }
   return { start, end, rest: t };
 }
 
@@ -2414,16 +2452,19 @@ $('#search-form').addEventListener('submit', async (e) => {
 // =====================================================================
 function updateNotifyLabel() {
   const l = $('#notify-label');
+  if (ANDROID) { l.textContent = ANDROID.notificationsEnabled?.() ? 'Notifiche attive' : 'Attiva notifiche'; return; }
   if (!('Notification' in window)) { l.textContent = 'Notifiche non supportate'; return; }
   l.textContent = Notification.permission === 'granted' ? 'Notifiche attive' : Notification.permission === 'denied' ? 'Notifiche bloccate dal browser' : 'Attiva notifiche';
 }
 async function askNotifyPermission() {
+  if (ANDROID) { ANDROID.askNotifications?.(); return; }
   if (!('Notification' in window) || Notification.permission !== 'default') return;
   try { await Notification.requestPermission(); } catch {}
   updateNotifyLabel();
 }
 $('#menu-notify').addEventListener('click', async () => {
   closeMenus();
+  if (ANDROID) { ANDROID.askNotifications?.(); setTimeout(updateNotifyLabel, 1500); return toast('Notifiche dell\'app: arrivano finché l\'app è aperta o in background'); }
   if (!('Notification' in window)) return toast('Questo browser non supporta le notifiche', true);
   if (Notification.permission === 'denied') return toast('Notifiche bloccate: riattivale dalle impostazioni del sito nel browser', true);
   await askNotifyPermission();
@@ -2445,6 +2486,7 @@ async function checkReminders() {
         fired[key] = Date.now();
         const body = ev.all_day ? 'Tutto il giorno' : `${timeStr(o.start)} – ${timeStr(o.end)}${ev.location ? ' · ' + ev.location : ''}`;
         if (DESKTOP) { DESKTOP.postMessage(JSON.stringify({ type: 'notify', title: ev.title, body })); }
+        else if (ANDROID) { ANDROID.notify(ev.title, body); }
         else if ('Notification' in window && Notification.permission === 'granted') {
           try { new Notification(ev.title, { body, tag: key, icon: LOGO }); } catch {}
         }
@@ -2473,6 +2515,22 @@ function subscribeRealtime() {
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && state.user) { state.calendar?.refetchEvents(); checkReminders(); }
 });
+
+// =====================================================================
+//  TASTO INDIETRO (app Android): true = gestito qui, false = esci dall'app
+// =====================================================================
+window.renkoBack = function () {
+  const dlg = document.querySelector('dialog[open]');
+  if (dlg) { dlg.close(); return true; }
+  if (!$('#avatar-menu').hidden) { closeMenus(); return true; }
+  if (!$('#quick-pop').hidden || !$('#detail-pop').hidden) { closePopovers(); return true; }
+  if ($('#left').classList.contains('open')) { setPanel('left', false); return true; }
+  if ($('#right').classList.contains('open')) { setPanel('right', false); return true; }
+  if (!$('#search-results').hidden) { closeSearch(); return true; }
+  if (state.board && !QUICK) { setBoard(false); return true; }
+  if (state.board && QUICK) { setQuickBoard(false); return true; }
+  return false;
+};
 
 // =====================================================================
 //  TASTIERA E GESTI
