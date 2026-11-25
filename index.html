@@ -244,6 +244,39 @@ input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); m
 .menu button, .menu label { display: flex; width: 100%; align-items: center; gap: .7rem; padding: .6rem 1.1rem; border: 0; background: none; cursor: pointer; font-size: .9rem; color: var(--text); flex-direction: row; }
 .menu button:hover, .menu label:hover { background: var(--hover); }
 
+/* bacheca */
+.icon-btn.active { background: var(--accent-soft); color: var(--accent); }
+#board { position: absolute; inset: 0; overflow: auto; background: var(--bg); z-index: 4; padding: 1.25rem 1.5rem 2rem; }
+.board-head { display: flex; align-items: baseline; gap: .75rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+.board-head h2 { font-size: 1.35rem; font-weight: 400; }
+.board-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 1.5rem 1.25rem; align-items: start; }
+.sticky {
+  --c: #616161; background: var(--tint); color: #202124; border-radius: 3px 3px 18px 3px; padding: 1rem 1.1rem 1.2rem;
+  box-shadow: 0 10px 18px -8px rgba(0,0,0,.28), 0 1px 2px rgba(0,0,0,.08); border-top: 7px solid var(--c);
+  transform: rotate(var(--rot, 0deg)); transition: transform .15s, box-shadow .15s; position: relative;
+}
+.sticky:hover { transform: rotate(0) translateY(-2px); box-shadow: 0 14px 24px -8px rgba(0,0,0,.32); }
+.sticky::before { content: ""; position: absolute; top: -14px; left: 50%; width: 70px; height: 20px; margin-left: -35px; background: rgba(255,255,255,.55); box-shadow: 0 1px 2px rgba(0,0,0,.08); transform: rotate(-2deg); }
+.st-head { display: flex; align-items: center; gap: .65rem; margin-bottom: .75rem; }
+.st-av { width: 34px; height: 34px; border-radius: 50%; background: var(--c); color: #fff; display: grid; place-items: center; font-weight: 600; flex: none; }
+.st-name { font-weight: 600; font-size: 1.05rem; line-height: 1.2; }
+.st-count { font-size: .75rem; color: #5f6368; }
+.st-sec { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #5f6368; margin: .35rem 0 .3rem; }
+.st-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .15rem; }
+.st-item { display: grid; grid-template-columns: 92px 1fr; gap: .5rem; padding: .3rem .35rem; border-radius: 6px; cursor: pointer; font-size: .9rem; line-height: 1.3; }
+.st-item:hover { background: rgba(0,0,0,.06); }
+.st-time { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+.st-title { word-break: break-word; }
+.st-loc { display: block; font-size: .75rem; color: #5f6368; }
+.st-item.past { opacity: .45; }
+.st-item.past .st-title { text-decoration: line-through; }
+.st-item.now { background: rgba(255,255,255,.65); box-shadow: inset 3px 0 0 var(--c); }
+.st-empty { font-size: .85rem; color: #5f6368; font-style: italic; padding: .2rem .35rem; }
+.st-tomorrow { margin-top: .8rem; padding-top: .6rem; border-top: 1px dashed rgba(0,0,0,.2); }
+.st-tomorrow .st-item { font-size: .78rem; grid-template-columns: 80px 1fr; padding: .15rem .35rem; color: #3c4043; }
+.st-tomorrow .st-time { font-weight: 500; }
+.st-off { font-size: .85rem; color: #5f6368; }
+
 /* ricerca */
 #search-results { position: absolute; inset: 0; background: var(--bg); z-index: 5; overflow: auto; padding: 1rem 1.5rem; }
 .res-head { display: flex; align-items: center; gap: .5rem; margin-bottom: .75rem; }
@@ -287,6 +320,9 @@ dialog::backdrop { background: rgba(0,0,0,.35); }
 
 /* ---------------- telefono ---------------- */
 @media (max-width: 860px) {
+  #board { padding: 1rem .75rem 5rem; }
+  .board-grid { gap: 1.4rem; }
+  #board-btn { display: none; }
   .topbar { height: 56px; gap: .1rem; padding: 0 .25rem; }
   .topbar .brand, #view-select, .search, #team-btn-wide { display: none; }
   .topbar.searching .search { display: flex; width: auto; flex: 1; }
@@ -355,6 +391,7 @@ dialog::backdrop { background: rgba(0,0,0,.35); }
       <option value="multiMonthYear">Anno</option>
       <option value="listMonth">Programma</option>
     </select>
+    <button class="icon-btn" id="board-btn" title="Bacheca operatori (B)" data-ico="board"></button>
     <button class="icon-btn" id="team-btn" title="Gruppo di lavoro" data-ico="users"></button>
     <button class="avatar" id="avatar-btn" title="Account"></button>
   </header>
@@ -370,7 +407,7 @@ dialog::backdrop { background: rgba(0,0,0,.35); }
       </div>
       <div class="keys">
         <b>Scorciatoie</b><br>
-        <kbd>C</kbd> nuovo · <kbd>T</kbd> oggi · <kbd>/</kbd> cerca<br>
+        <kbd>C</kbd> nuovo · <kbd>T</kbd> oggi · <kbd>/</kbd> cerca · <kbd>B</kbd> bacheca<br>
         <kbd>G</kbd> giorno · <kbd>S</kbd> settimana · <kbd>M</kbd> mese · <kbd>A</kbd> anno<br>
         <kbd>←</kbd> <kbd>→</kbd> sposta · <kbd>Esc</kbd> chiudi
       </div>
@@ -379,6 +416,7 @@ dialog::backdrop { background: rgba(0,0,0,.35); }
     <main class="main">
       <div id="calendar"></div>
       <div id="search-results" hidden></div>
+      <div id="board" hidden></div>
     </main>
 
     <aside class="right" id="right">
@@ -578,6 +616,7 @@ const ICONS = {
   bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/>',
   repeat: '<path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>',
   palette: '<circle cx="12" cy="12" r="9"/><circle cx="8" cy="10" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16" cy="10" r="1.2"/><path d="M12 21a3 3 0 0 1 0-6h2"/>',
+  board: '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
   logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
 };
 const ic = (name, cls = 'ico') => `<svg class="${cls}" viewBox="0 0 24 24">${ICONS[name] || ''}</svg>`;
@@ -668,6 +707,8 @@ const state = {
   quick: null,
   miniMonth: new Date(),
   eventsCache: [],
+  board: store.get('rc.board', false),
+  boardDate: new Date(),
 };
 
 // =====================================================================
@@ -719,6 +760,7 @@ async function startApp(user) {
   initCalendar();
   await loadTeams();
   subscribeRealtime();
+  setBoard(state.board);
   updateNotifyLabel();
   checkReminders();
 }
@@ -849,6 +891,7 @@ async function loadMembers() {
   }
   renderTeamPanel();
   state.calendar?.refetchEvents();
+  if (state.board) renderBoard();
 }
 
 function renderTeamPanel() {
@@ -1073,7 +1116,7 @@ function eventContent(arg) {
 function onDatesSet(info) {
   store.set('rc.view', info.view.type);
   $('#view-select').value = info.view.type;
-  $('#title').textContent = viewTitle(info.view);
+  if (!state.board) $('#title').textContent = viewTitle(info.view);
   state.miniMonth = new Date(info.view.currentStart);
   renderMini();
   renderViewsMobile();
@@ -1090,16 +1133,24 @@ function viewTitle(view) {
   return `${F_MONTHSHORT.format(s)} ${s.getFullYear()} – ${F_MONTHSHORT.format(e)} ${e.getFullYear()}`;
 }
 
-$('#today-btn').addEventListener('click', () => state.calendar.today());
-$('#prev-btn').addEventListener('click', () => state.calendar.prev());
-$('#next-btn').addEventListener('click', () => state.calendar.next());
-$('#view-select').addEventListener('change', (e) => state.calendar.changeView(e.target.value));
+function goToday() { if (state.board) { state.boardDate = new Date(); renderBoard(); } else state.calendar.today(); }
+function goPrev() { if (state.board) { state.boardDate = addDays(state.boardDate, -1); renderBoard(); } else state.calendar.prev(); }
+function goNext() { if (state.board) { state.boardDate = addDays(state.boardDate, 1); renderBoard(); } else state.calendar.next(); }
+function showView(v) { setBoard(false); state.calendar.changeView(v); }
+$('#today-btn').addEventListener('click', goToday);
+$('#prev-btn').addEventListener('click', goPrev);
+$('#next-btn').addEventListener('click', goNext);
+$('#view-select').addEventListener('change', (e) => showView(e.target.value));
 
 function renderViewsMobile() {
   const box = $('#views-mobile');
   const cur = state.calendar?.view.type;
-  box.innerHTML = VIEWS.map(([v, label]) => `<button type="button" data-v="${v}" class="${v === cur ? 'active' : ''}">${label}</button>`).join('');
-  $$('button', box).forEach((b) => b.addEventListener('click', () => { state.calendar.changeView(b.dataset.v); setPanel('left', false); }));
+  box.innerHTML = `<button type="button" data-v="board" class="${state.board ? 'active' : ''}">Bacheca operatori</button>` +
+    VIEWS.map(([v, label]) => `<button type="button" data-v="${v}" class="${!state.board && v === cur ? 'active' : ''}">${label}</button>`).join('');
+  $$('button', box).forEach((b) => b.addEventListener('click', () => {
+    if (b.dataset.v === 'board') setBoard(true); else showView(b.dataset.v);
+    setPanel('left', false);
+  }));
 }
 
 // ------------------------------------------------------------- mini calendario
@@ -1127,7 +1178,8 @@ function renderMini() {
     renderMini();
   }));
   $$('[data-d]', box).forEach((b) => b.addEventListener('click', () => {
-    state.calendar.gotoDate(b.dataset.d);
+    if (state.board) { state.boardDate = new Date(b.dataset.d + 'T12:00'); renderBoard(); }
+    else state.calendar.gotoDate(b.dataset.d);
     if (isMobile()) setPanel('left', false);
   }));
 }
@@ -1500,6 +1552,116 @@ $('#create-btn').addEventListener('click', () => openEventDialog(null, null));
 $('#fab').addEventListener('click', () => openEventDialog(null, null));
 
 // =====================================================================
+//  BACHECA OPERATORI (post-it: oggi + domani per ogni persona)
+// =====================================================================
+function setBoard(on) {
+  state.board = !!on;
+  store.set('rc.board', state.board);
+  $('#board').hidden = !state.board;
+  $('#board-btn').classList.toggle('active', state.board);
+  if (state.board) { closePopovers(); renderBoard(); }
+  else if (state.calendar) $('#title').textContent = viewTitle(state.calendar.view);
+  renderViewsMobile();
+}
+$('#board-btn').addEventListener('click', () => setBoard(!state.board));
+
+function dayLabel(d) {
+  const today = new Date();
+  if (sameDay(d, today)) return 'Oggi';
+  if (sameDay(d, addDays(today, 1))) return 'Domani';
+  if (sameDay(d, addDays(today, -1))) return 'Ieri';
+  return cap(F_WD.format(d));
+}
+
+let boardSeq = 0;
+async function renderBoard() {
+  if (!state.user || !state.board) return;
+  const seq = ++boardSeq;
+  const d0 = new Date(state.boardDate); d0.setHours(0, 0, 0, 0);
+  const d1 = addDays(d0, 1), d2 = addDays(d0, 2);
+  $('#title').textContent = 'Bacheca';
+
+  const { data, error } = await queryEvents(d0, d2);
+  if (seq !== boardSeq) return;
+  if (error) return toast(errText(error), true);
+
+  const me = state.user.id;
+  // operatori: io + colleghi del gruppo (rispettando le spunte del pannello)
+  const ops = [{ user_id: me, profile: state.profile, share_events: true }];
+  for (const m of [...state.members].sort((a, b) => a.profile.display_name.localeCompare(b.profile.display_name))) {
+    if (m.user_id === me || state.hidden.has(m.user_id)) continue;
+    ops.push(m);
+  }
+
+  const byOwner = new Map();
+  for (const ev of data) {
+    if (!byOwner.has(ev.owner_id)) byOwner.set(ev.owner_id, []);
+    byOwner.get(ev.owner_id).push(ev);
+  }
+  const now = new Date();
+  const collect = (evs, a, b) => {
+    const out = [];
+    for (const ev of evs) for (const o of occurrences(ev, a, b)) out.push({ ev, start: o.start, end: o.end });
+    return out.sort((x, y) => (y.ev.all_day - x.ev.all_day) || (x.start - y.start));
+  };
+  const timeLabel = (it, a, b) => {
+    if (it.ev.all_day) return 'Tutto il giorno';
+    const s = it.start < a ? '…' : timeStr(it.start);
+    const e = it.end > b ? '…' : timeStr(it.end);
+    return `${s} – ${e}`;
+  };
+  const itemHtml = (it, a, b, withState) => {
+    let cls = '';
+    if (withState && !it.ev.all_day) {
+      if (it.end <= now) cls = 'past';
+      else if (it.start <= now) cls = 'now';
+    }
+    const lock = it.ev.is_private ? ic('lock', 'ico ev-ico') : '';
+    return `<li class="st-item ${cls}" data-d="${dateStr(it.start < a ? a : it.start)}">
+      <span class="st-time">${timeLabel(it, a, b)}</span>
+      <span class="st-title">${lock}${esc(it.ev.title)}${it.ev.location ? `<span class="st-loc">${esc(it.ev.location)}</span>` : ''}</span></li>`;
+  };
+
+  const lab0 = dayLabel(d0), lab1 = dayLabel(d1);
+  const cards = ops.map((op, i) => {
+    const color = op.profile?.color || '#616161';
+    const tint = mix(color, '#ffffff', .82);
+    const rot = ((i * 37) % 5 - 2) * 0.35;
+    const name = op.profile?.display_name || '?';
+    const isMe = op.user_id === me;
+    let body;
+    if (!isMe && !op.share_events) {
+      body = `<p class="st-off">Ha scelto di non condividere i suoi impegni.</p>`;
+    } else {
+      const evs = byOwner.get(op.user_id) || [];
+      const today = collect(evs, d0, d1);
+      const tomorrow = collect(evs, d1, d2);
+      body = `<div class="st-sec">${lab0} · ${today.length}</div>
+        ${today.length ? `<ul class="st-list">${today.map((it) => itemHtml(it, d0, d1, sameDay(d0, now))).join('')}</ul>` : '<p class="st-empty">Nessun impegno</p>'}
+        <div class="st-tomorrow"><div class="st-sec">${lab1}</div>
+        ${tomorrow.length ? `<ul class="st-list">${tomorrow.map((it) => itemHtml(it, d1, d2, false)).join('')}</ul>` : '<p class="st-empty" style="font-size:.78rem">Nessun impegno</p>'}</div>`;
+    }
+    return `<article class="sticky" style="--c:${color};--tint:${tint};--rot:${rot}deg">
+      <div class="st-head"><span class="st-av">${esc(name.trim().charAt(0).toUpperCase())}</span>
+        <div><div class="st-name">${esc(name)}${isMe ? ' <span class="st-count">(tu)</span>' : ''}</div></div></div>
+      ${body}</article>`;
+  }).join('');
+
+  const team = currentTeam();
+  $('#board').innerHTML = `
+    <div class="board-head"><h2>${cap(F_DAYLONG.format(d0))}</h2>
+      <span class="muted small">${team ? esc(team.name) + ' · ' : ''}${ops.length} operator${ops.length === 1 ? 'e' : 'i'}</span></div>
+    <div class="board-grid">${cards}</div>
+    ${state.teams.length ? '' : '<p class="muted small" style="margin-top:1.5rem">Crea o entra in un gruppo (pannello a destra) per vedere anche i colleghi.</p>'}`;
+  $$('.st-item', $('#board')).forEach((el) => el.addEventListener('click', () => {
+    setBoard(false);
+    state.calendar.changeView('timeGridDay', el.dataset.d);
+  }));
+}
+// aggiorna "in corso / passato" ogni minuto
+setInterval(() => { if (state.board) renderBoard(); }, 60000);
+
+// =====================================================================
 //  RICERCA
 // =====================================================================
 function openSearch() {
@@ -1600,7 +1762,7 @@ setInterval(checkReminders, 30000);
 function subscribeRealtime() {
   if (state.channel) sb.removeChannel(state.channel);
   let t, tm;
-  const refetch = () => { clearTimeout(t); t = setTimeout(() => state.calendar?.refetchEvents(), 300); };
+  const refetch = () => { clearTimeout(t); t = setTimeout(() => { state.calendar?.refetchEvents(); if (state.board) renderBoard(); }, 300); };
   const reloadTeams = () => { clearTimeout(tm); tm = setTimeout(loadTeams, 300); };
   state.channel = sb.channel('rc-live')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, refetch)
@@ -1620,13 +1782,14 @@ document.addEventListener('keydown', (e) => {
   if (e.target.closest('input, textarea, select, dialog') || e.ctrlKey || e.metaKey || e.altKey) return;
   const k = e.key.toLowerCase();
   const view = VIEWS.find((v) => v[2] === k);
-  if (view) { state.calendar.changeView(view[0]); e.preventDefault(); return; }
+  if (view) { showView(view[0]); e.preventDefault(); return; }
   switch (k) {
-    case 't': state.calendar.today(); break;
+    case 'b': setBoard(!state.board); break;
+    case 't': goToday(); break;
     case 'c': openEventDialog(null, null); break;
     case '/': openSearch(); break;
-    case 'arrowleft': case 'j': case 'p': state.calendar.prev(); break;
-    case 'arrowright': case 'k': case 'n': state.calendar.next(); break;
+    case 'arrowleft': case 'j': case 'p': goPrev(); break;
+    case 'arrowright': case 'k': case 'n': goNext(); break;
     default: return;
   }
   e.preventDefault();
@@ -1639,7 +1802,7 @@ document.addEventListener('keydown', (e) => {
   el.addEventListener('touchstart', (e) => { const t = e.touches[0]; sx = t.clientX; sy = t.clientY; st = Date.now(); }, { passive: true });
   el.addEventListener('touchend', (e) => {
     const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
-    if (Date.now() - st < 600 && Math.abs(dx) > 70 && Math.abs(dy) < 60 && state.calendar) dx < 0 ? state.calendar.next() : state.calendar.prev();
+    if (Date.now() - st < 600 && Math.abs(dx) > 70 && Math.abs(dy) < 60 && state.calendar) dx < 0 ? goNext() : goPrev();
   }, { passive: true });
 })();
 
