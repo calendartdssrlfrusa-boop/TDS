@@ -59,18 +59,10 @@ const state = {
 };
 
 // ================================================================== ACCESSO
-function showAuth(mode = 'login') {
+// Gli utenti li crea l'amministratore in Supabase > Authentication > Users.
+function showAuth() {
   $('#app-view').hidden = true;
   $('#auth-view').hidden = false;
-  setAuthTab(mode);
-}
-
-function setAuthTab(mode) {
-  document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === mode));
-  $('.tabs').hidden = mode === 'recovery';
-  $('#login-form').hidden = mode !== 'login';
-  $('#signup-form').hidden = mode !== 'signup';
-  $('#recovery-form').hidden = mode !== 'recovery';
   authMsg('');
 }
 
@@ -79,9 +71,6 @@ function authMsg(text, isError = false) {
   el.textContent = text;
   el.classList.toggle('error', isError);
 }
-
-document.querySelectorAll('.tabs button').forEach((b) =>
-  b.addEventListener('click', () => setAuthTab(b.dataset.tab)));
 
 $('#login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -93,74 +82,16 @@ $('#login-form').addEventListener('submit', async (e) => {
   if (error) authMsg(errText(error), true);
 });
 
-$('#signup-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const f = new FormData(e.target);
-  authMsg('Creazione account…');
-  const { data, error } = await supabase.auth.signUp({
-    email: f.get('email').trim(),
-    password: f.get('password'),
-    options: { data: { display_name: f.get('name').trim() }, emailRedirectTo: location.origin },
-  });
-  if (error) return authMsg(errText(error), true);
-  if (!data.session) {
-    authMsg('Fatto! Ti abbiamo mandato una email: clicca il link per confermare e poi accedi.');
-    e.target.reset();
-  }
-});
-
-$('#forgot-btn').addEventListener('click', async () => {
-  const email = $('#login-form [name=email]').value.trim();
-  if (!email) return authMsg('Scrivi prima la tua email qui sopra.', true);
-  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: location.origin });
-  authMsg(error ? errText(error) : 'Ti abbiamo mandato una email per reimpostare la password.', !!error);
-});
-
-$('#recovery-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const password = new FormData(e.target).get('password');
-  const { error } = await supabase.auth.updateUser({ password });
-  if (error) return authMsg(errText(error), true);
-  toast('Password aggiornata');
-  const { data } = await supabase.auth.getSession();
-  if (data.session) startApp(data.session.user);
-});
-
 $('#logout-btn').addEventListener('click', () => supabase.auth.signOut());
-
-// ------------------------------------------------------------------ accesso libero (prove)
-// Con VITE_ACCESSO_LIBERO=1 il sito entra senza iscrizione: Supabase crea un
-// utente "ospite" (anonimo) legato a questo browser. I dati restano salvati.
-const ACCESSO_LIBERO = import.meta.env.VITE_ACCESSO_LIBERO === '1';
-
-async function enterAsGuest() {
-  authMsg('Apertura…');
-  const { error } = await supabase.auth.signInAnonymously();
-  if (error) {
-    showAuth('login');
-    authMsg('Accesso libero non attivo su Supabase: abilita "Allow anonymous sign-ins". (' + errText(error) + ')', true);
-  }
-}
-
-$('#guest-btn').hidden = !ACCESSO_LIBERO;
-$('#guest-btn').addEventListener('click', async () => {
-  const { data } = await supabase.auth.getSession();
-  if (data.session?.user) { $('#auth-view').hidden = true; $('#app-view').hidden = false; }
-  else enterAsGuest();
-});
-
-$('#login-btn').addEventListener('click', () => showAuth('login'));
 
 supabase.auth.onAuthStateChange((event, session) => {
   // le chiamate a Supabase vanno fuori dalla callback (evita blocchi)
   setTimeout(() => {
-    if (event === 'PASSWORD_RECOVERY') return showAuth('recovery');
     if (session?.user) {
       if (state.user?.id !== session.user.id) startApp(session.user);
     } else {
       stopApp();
-      if (ACCESSO_LIBERO) enterAsGuest();
-      else showAuth('login');
+      showAuth();
     }
   }, 0);
 });
@@ -170,10 +101,6 @@ async function startApp(user) {
   state.user = user;
   $('#auth-view').hidden = true;
   $('#app-view').hidden = false;
-  const guest = !!user.is_anonymous;
-  $('#guest-badge').hidden = !guest;
-  $('#login-btn').hidden = !guest;
-  $('#logout-btn').hidden = guest;   // un ospite che "esce" perderebbe i suoi dati
 
   await loadProfile();
   initCalendar();
@@ -204,7 +131,7 @@ $('#profile-btn').addEventListener('click', () => {
   const f = $('#profile-form');
   f.display_name.value = state.profile.display_name;
   f.color.value = state.profile.color;
-  $('#profile-email').textContent = state.user.email || 'Ospite (modalità prova, senza email)';
+  $('#profile-email').textContent = state.user.email;
   $('#profile-dialog').returnValue = '';
   $('#profile-dialog').showModal();
 });

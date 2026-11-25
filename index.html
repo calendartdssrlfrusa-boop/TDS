@@ -15,30 +15,10 @@
     <div class="auth-card">
       <div class="brand"><img src="/icon.svg" alt="" width="40" height="40" /> Renko Calendar</div>
 
-      <div class="tabs">
-        <button type="button" data-tab="login" class="active">Accedi</button>
-        <button type="button" data-tab="signup">Iscriviti</button>
-      </div>
-
       <form id="login-form" class="stack">
         <label>Email <input name="email" type="email" required autocomplete="email" /></label>
         <label>Password <input name="password" type="password" required autocomplete="current-password" /></label>
         <button class="btn primary" type="submit">Accedi</button>
-        <button class="link" type="button" id="forgot-btn">Password dimenticata?</button>
-        <button class="btn" type="button" id="guest-btn" hidden>Continua senza account (prova)</button>
-      </form>
-
-      <form id="signup-form" class="stack" hidden>
-        <label>Nome e cognome <input name="name" required maxlength="60" autocomplete="name" /></label>
-        <label>Email <input name="email" type="email" required autocomplete="email" /></label>
-        <label>Password <input name="password" type="password" required minlength="8" autocomplete="new-password" /></label>
-        <button class="btn primary" type="submit">Crea account</button>
-      </form>
-
-      <form id="recovery-form" class="stack" hidden>
-        <p>Scegli la nuova password.</p>
-        <label>Nuova password <input name="password" type="password" required minlength="8" autocomplete="new-password" /></label>
-        <button class="btn primary" type="submit">Salva password</button>
       </form>
 
       <p id="auth-msg" class="msg" role="status"></p>
@@ -48,11 +28,10 @@
   <!-- ====================== APP ====================== -->
   <section id="app-view" class="app" hidden>
     <header class="topbar">
-      <div class="brand"><img src="/icon.svg" alt="" width="28" height="28" /> <span>Renko Calendar</span> <span class="badge" id="guest-badge" hidden>prova</span></div>
+      <div class="brand"><img src="/icon.svg" alt="" width="28" height="28" /> <span>Renko Calendar</span></div>
       <div class="topbar-right">
         <button class="btn ghost" id="profile-btn" title="Il mio profilo"><span class="dot" id="me-dot"></span><span id="me-name"></span></button>
         <button class="btn ghost icon" id="team-toggle" title="Gruppo" aria-label="Mostra gruppo">👥</button>
-        <button class="btn ghost" id="login-btn" hidden>Accedi</button>
         <button class="btn ghost" id="logout-btn">Esci</button>
       </div>
     </header>
