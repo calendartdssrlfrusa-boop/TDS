@@ -517,7 +517,7 @@ dialog::backdrop { background: rgba(0,0,0,.35); }
 <section id="quick-view" class="quick" hidden>
   <header class="q-head">
     <img id="logo-quick" alt=""> <b>Promemoria rapido</b> <span class="spacer"></span>
-    <button class="icon-btn sm" id="q-full" title="Nuovo impegno completo (pagina intera)" data-ico="plus"></button>
+    <button class="icon-btn sm" id="q-full" title="Nuovo impegno (scheda completa)" data-ico="plus"></button>
     <button class="icon-btn sm" id="q-open" title="Apri il calendario completo" data-ico="external"></button>
     <button class="icon-btn sm" id="q-close" title="Chiudi (Esc)" data-ico="x" hidden></button>
   </header>
@@ -1624,7 +1624,14 @@ form.addEventListener('submit', async (e) => {
   $('#event-save').disabled = false;
   if (error) { $('#event-msg').textContent = errText(error); return; }
   $('#event-dialog').close();
-  state.calendar.refetchEvents();
+  state.calendar?.refetchEvents();
+  if (QUICK) {
+    // pannello rapido: conferma in chat e mostra il giorno
+    const when = payload.all_day ? '' : timeStr(start) + ' ';
+    const rep = payload.repeat_freq ? ' (si ripete)' : '';
+    addMsg('bot', `✓ ${state.editing ? 'Aggiornato' : 'Aggiunto'} per ${dayPhrase(start)}:\n• ${when}${payload.title}${rep}`, 'ok');
+    selectDay(start);
+  }
   toast(state.editing ? 'Impegno aggiornato' : 'Impegno salvato');
   if (reminder != null) askNotifyPermission();
 });
@@ -1983,14 +1990,19 @@ $('#q-text').addEventListener('input', (e) => {
   e.target.style.height = 'auto';
   e.target.style.height = Math.min(110, e.target.scrollHeight) + 'px';
 });
+// "+" : scheda completa del nuovo impegno, direttamente nel pannello
 $('#q-full').addEventListener('click', () => {
-  const d = q.target || q.selected || new Date();
-  window.open(`${BASE_URL}#nuovo=${dateStr(d)}`, '_blank');
+  const d = sod(q.target || q.selected || new Date());
+  const now = new Date();
+  let start = new Date(d);
+  if (sameDay(d, now)) { start = new Date(now); start.setMinutes(0, 0, 0); start = addMin(start, 60); }
+  else start.setHours(9, 0, 0, 0);
+  openEventDialog(null, { start, end: addMin(start, 60), allDay: false });
 });
 $('#q-open').addEventListener('click', () => window.open(BASE_URL, '_blank'));
 $('#q-close').addEventListener('click', () => DESKTOP?.postMessage(JSON.stringify({ type: 'close' })));
 document.addEventListener('keydown', (e) => {
-  if (QUICK && e.key === 'Escape' && DESKTOP) DESKTOP.postMessage(JSON.stringify({ type: 'close' }));
+  if (QUICK && e.key === 'Escape' && DESKTOP && !document.querySelector('dialog[open]')) DESKTOP.postMessage(JSON.stringify({ type: 'close' }));
 });
 
 // =====================================================================
