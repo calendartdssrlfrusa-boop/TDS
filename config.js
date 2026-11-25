@@ -7,6 +7,6 @@
 //  NON mettere MAI qui la chiave "service_role" / "secret".
 // =====================================================================
 
-export const SUPABASE_URL = 'https://INCOLLA-QUI.supabase.co';
+export const SUPABASE_URL = 'https://jvnxdjpaaokrnvazguye.supabase.co';
 
-export const SUPABASE_ANON_KEY = 'INCOLLA-QUI-LA-CHIAVE-ANON';
+export const SUPABASE_ANON_KEY = 'sb_publishable_erUBNhKrcVNA6H51rg0sBw_x8Ea4e0X';
