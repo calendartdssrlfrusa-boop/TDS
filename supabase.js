@@ -2,8 +2,8 @@ import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 
 // Le variabili di Cloudflare (se impostate) hanno la precedenza su config.js
-const url = import.meta.env.VITE_SUPABASE_URL || SUPABASE_URL;
-const key = import.meta.env.VITE_SUPABASE_ANON_KEY || SUPABASE_ANON_KEY;
+const url = https://jvnxdjpaaokrnvazguye.supabase.co;
+const key = sb_publishable_erUBNhKrcVNA6H51rg0sBw_x8Ea4e0X;
 
 if (!url || !key || url.includes('INCOLLA-QUI') || key.includes('INCOLLA-QUI')) {
   document.body.innerHTML =
