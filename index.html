@@ -336,6 +336,15 @@ input.chip { padding: .2rem .5rem; }
 #alert-popup .al-pop-body { padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: .75rem; max-height: 60dvh; overflow: auto; }
 #alert-popup .al-pop-foot { padding: 0 1.2rem 1.1rem; display: flex; gap: .5rem; justify-content: flex-end; }
 
+/* partecipanti ("con ...") */
+.suggest { display: flex; gap: .35rem; flex-wrap: wrap; align-items: center; }
+.suggest .lbl { font-size: .75rem; color: var(--muted); margin-right: .1rem; }
+.q-suggest { padding: .45rem .6rem 0; background: var(--bg); }
+.chip .dot { width: 9px; height: 9px; margin-right: .35rem; vertical-align: 0; }
+.people-pick { display: flex; gap: .35rem; flex-wrap: wrap; padding-top: .25rem; }
+.people-pick .chip.sel::before { content: "✓ "; }
+.ev-people { font-size: .72rem; opacity: .9; }
+
 /* bacheca */
 .icon-btn.active { background: var(--accent-soft); color: var(--accent); }
 #board { position: absolute; inset: 0; overflow: auto; background: var(--bg); z-index: 4; padding: 1.25rem 1.5rem 2rem; }
@@ -704,11 +713,13 @@ dialog::backdrop { background: rgba(15, 17, 40, .35); backdrop-filter: blur(4px)
     <button class="alert-btn none" data-alert-btn title="Allerte" aria-label="Allerte"><span data-ico="siren"></span></button>
     <button class="icon-btn sm" id="q-board" title="Bacheca operatori" data-ico="board"></button>
     <button class="icon-btn sm" id="q-open" title="Apri il calendario completo" data-ico="external"></button>
+    <button class="icon-btn sm" id="q-logout" title="Disconnetti / cambia utente" data-ico="logout"></button>
     <button class="icon-btn sm" id="q-close" title="Chiudi (Esc)" data-ico="x" hidden></button>
   </header>
   <div class="q-chat" id="q-chat"></div>
   <div class="q-target" id="q-target" hidden><span data-ico="clock"></span><span id="q-target-text" style="flex:1"></span>
     <button class="icon-btn sm" id="q-target-x" title="Togli la data" data-ico="x"></button></div>
+  <div class="suggest q-suggest" id="q-suggest" hidden></div>
   <form class="q-input" id="q-form">
     <textarea id="q-text" rows="1" placeholder="Es. domani alle 10 chiamare Mario, ritirare pacco" autocomplete="off"></textarea>
     <button class="q-send" type="submit" title="Invia (Invio)" data-ico="send"></button>
@@ -728,6 +739,7 @@ dialog::backdrop { background: rgba(15, 17, 40, .35); backdrop-filter: blur(4px)
       <button type="button" class="icon-btn sm" id="event-x" data-ico="x"></button>
     </div>
     <input class="title-input" name="title" placeholder="Aggiungi titolo" required maxlength="200" autocomplete="off">
+    <div class="suggest" id="ev-suggest" hidden></div>
 
     <div class="field-row"><span data-ico="clock"></span>
       <div class="stack" style="gap:.5rem">
@@ -768,7 +780,10 @@ dialog::backdrop { background: rgba(15, 17, 40, .35); backdrop-filter: blur(4px)
     <div class="field-row"><span data-ico="pin"></span><input name="location" placeholder="Aggiungi luogo" maxlength="200"></div>
     <div class="field-row"><span data-ico="text"></span><textarea name="description" rows="3" placeholder="Aggiungi descrizione"></textarea></div>
     <div class="field-row"><span data-ico="palette"></span><div class="colors" id="color-pick"></div></div>
-    <div class="field-row"><span data-ico="lock"></span><label class="check"><input type="checkbox" name="is_private"> Privato (i colleghi non lo vedono)</label></div>
+    <div class="field-row"><span data-ico="users"></span>
+      <div><span class="muted small">Insieme a (lo vedranno nel loro calendario)</span><div class="people-pick" id="ev-people"></div></div>
+    </div>
+    <div class="field-row"><span data-ico="lock"></span><label class="check"><input type="checkbox" name="is_private"> Privato (i colleghi non lo vedono, tranne chi partecipa)</label></div>
 
     <p class="note" id="series-note" hidden>Le modifiche valgono per tutti gli eventi della serie.</p>
     <p id="event-msg" class="msg"></p>
@@ -1120,6 +1135,13 @@ $('#recovery-form').addEventListener('submit', async (e) => {
 });
 $('#logout-btn').addEventListener('click', () => { closeMenus(); sb.auth.signOut(); });
 
+// Disconnessione (usata anche dal programma PC: menu "Disconnetti / cambia utente")
+window.renkoLogout = async function () {
+  try { await sb.auth.signOut(); } catch {}
+  try { await sb.auth.signOut({ scope: 'local' }); } catch {}
+  return true;
+};
+
 sb.auth.onAuthStateChange((event, session) => {
   setTimeout(() => {
     if (event === 'PASSWORD_RECOVERY') { recovering = true; stopApp(); return showAuth('recovery'); }
@@ -1170,6 +1192,10 @@ function openFromHash() {
 }
 function stopApp() {
   $('#quick-view').hidden = true;
+  // pulizia della chat rapida (al prossimo accesso riparte vuota)
+  $('#q-chat').innerHTML = '';
+  if (typeof setTarget === 'function') setTarget(null);
+  state.alerts = [];
   state.user = null;
   state.profile = null;
   if (state.channel) sb.removeChannel(state.channel);
@@ -1303,7 +1329,7 @@ async function loadMembers() {
   state.members = [];
   if (team) {
     const { data, error } = await sb.from('team_members')
-      .select('user_id, role, share_events, profile:profiles(id, display_name, color, role)')
+      .select('user_id, role, share_events, profile:profiles(id, display_name, first_name, last_name, color, role)')
       .eq('team_id', team.id);
     if (error) return toast(errText(error), true);
     state.members = data.filter((m) => m.profile);
@@ -1483,7 +1509,8 @@ function initCalendar() {
     dayHeaderContent: dayHeader,
     eventContent: eventContent,
     eventClassNames: (arg) => {
-      const c = [arg.event.extendedProps.mine ? 'ev-mine' : 'ev-other'];
+      const ep = arg.event.extendedProps;
+      const c = [ep.mine || ep.involved ? 'ev-mine' : 'ev-other'];
       if (state.dimPast && arg.event.end && arg.event.end < new Date()) c.push('ev-past');
       return c;
     },
@@ -1516,7 +1543,9 @@ function eventContent(arg) {
   const t = arg.view.type;
   const lock = p.row.is_private ? ic('lock', 'ico ev-ico') : '';
   const rep = p.row.repeat_freq ? ic('repeat', 'ico ev-ico') : '';
-  const owner = p.mine ? '' : (state.profiles.get(p.row.owner_id)?.display_name || '');
+  let owner = p.mine ? '' : (state.profiles.get(p.row.owner_id)?.display_name || 'Amministrazione');
+  const people = peopleText(p.row);
+  if (people) owner = owner ? `${owner} ${people}` : people;
   if (t.startsWith('timeGrid') && !arg.event.allDay) {
     const mins = arg.event.end ? (arg.event.end - arg.event.start) / 60000 : 60;
     if (mins <= 45) {
@@ -1670,12 +1699,14 @@ async function fetchEvents(info, success, failure) {
   const out = [];
   for (const ev of data) {
     const mine = ev.owner_id === me;
+    const involved = !mine && (ev.participants || []).includes(me);
     if (mine && !state.showMine) continue;
-    if (!mine && (!team.has(ev.owner_id) || state.hidden.has(ev.owner_id))) continue;
+    if (!mine && !involved && (!team.has(ev.owner_id) || state.hidden.has(ev.owner_id))) continue;
     const ownerColor = state.profiles.get(ev.owner_id)?.color || '#616161';
     const color = mine ? (ev.color || ownerColor) : ownerColor;
-    const bg = DARK ? mix(color, '#14151a', mine ? .55 : .72) : mix(color, '#ffffff', mine ? .80 : .90);
-    const fg = DARK ? mix(color, '#ffffff', .55) : mix(color, '#000000', mine ? .50 : .40);
+    const strong = mine || involved;
+    const bg = DARK ? mix(color, '#14151a', strong ? .55 : .72) : mix(color, '#ffffff', strong ? .80 : .90);
+    const fg = DARK ? mix(color, '#ffffff', .55) : mix(color, '#000000', strong ? .50 : .40);
     for (const o of occurrences(ev, info.start, info.end)) {
       out.push({
         id: o.key ? `${ev.id}::${o.key}` : ev.id,
@@ -1683,7 +1714,7 @@ async function fetchEvents(info, success, failure) {
         start: o.start, end: o.end, allDay: ev.all_day,
         backgroundColor: bg, borderColor: color, textColor: fg,
         editable: mine && !ev.repeat_freq,
-        extendedProps: { row: ev, mine, occKey: o.key, color },
+        extendedProps: { row: ev, mine, involved, occKey: o.key, color },
       });
     }
   }
@@ -1799,7 +1830,8 @@ function openDetail(fcEvent, el) {
     ${row.location ? `<div class="pop-row">${ic('pin')}<div>${esc(row.location)}</div></div>` : ''}
     ${row.description ? `<div class="pop-row">${ic('text')}<div class="pop-desc">${esc(row.description)}</div></div>` : ''}
     ${p.mine && row.reminder_minutes != null ? `<div class="pop-row">${ic('bell')}<div>${esc(REMINDER_TEXT[row.reminder_minutes] || row.reminder_minutes + ' minuti prima')}</div></div>` : ''}
-    <div class="pop-row">${ic('user')}<div>${esc(owner?.display_name || '')}${p.mine ? ' <span class="muted">(tu)</span>' : ''}</div></div>
+    <div class="pop-row">${ic('user')}<div>${esc(owner?.display_name || 'Amministrazione')}${p.mine ? ' <span class="muted">(tu)</span>' : ''}</div></div>
+    ${(row.participants || []).length ? `<div class="pop-row">${ic('users')}<div>Insieme a: ${esc(participantNames(row, true))}</div></div>` : ''}
     ${row.is_private ? `<div class="pop-row">${ic('lock')}<div>Privato</div></div>` : ''}`;
   pop.querySelector('[data-a=close]').onclick = closePopovers;
   if (p.mine) {
@@ -1901,6 +1933,9 @@ function openEventDialog(row, sel, preset) {
   form.description.value = src.description || '';
   form.is_private.checked = !!src.is_private;
   form.reminder_minutes.value = src.reminder_minutes ?? '';
+  evPeople = new Set(src.participants || []);
+  renderPeoplePick();
+  $('#ev-suggest').hidden = true;
 
   const shownEnd = allDay ? addDays(end, -1) : end;
   form.all_day.checked = allDay;
@@ -1954,6 +1989,7 @@ form.addEventListener('submit', async (e) => {
     repeat_interval: freq ? Math.max(1, Math.min(99, Number(form.repeat_interval.value) || 1)) : 1,
     repeat_until: freq && form.repeat_until.value ? form.repeat_until.value : null,
     reminder_minutes: reminder,
+    participants: [...evPeople],
   };
   if (!freq) payload.repeat_except = [];
   $('#event-save').disabled = true;
@@ -2033,8 +2069,9 @@ async function checkTodayEmpty() {
   if (!ASK_WEEKDAYS.includes(now.getDay()) || now.getHours() < 6) return;
   if (store.get('rc.askedDay', '') === key) return;
   const d0 = sod(now), d1 = addDays(d0, 1);
-  const { data, error } = await queryEvents(d0, d1, (x) => x.eq('owner_id', state.user.id));
+  const { data: all, error } = await queryEvents(d0, d1);
   if (error) return;
+  const data = all.filter((ev) => ev.owner_id === state.user.id || (ev.participants || []).includes(state.user.id));
   if (data.some((ev) => occurrences(ev, d0, d1).length)) { store.set('rc.askedDay', key); return; }
   todayAsking = true;
   store.set('rc.askedDay', key);
@@ -2287,10 +2324,11 @@ async function handleMessage(text) {
   for (const part of parts) {
     const { spec, rest } = parseDateSpec(part);
     if (spec || !cur) { cur = { spec, items: [] }; groups.push(cur); }
-    const tm = parseTime(rest);
+    const pp = extractParticipants(rest);
+    const tm = parseTime(pp.rest);
     const title = cleanTitle(tm.rest);
-    if (title) cur.items.push({ title, start: tm.start, end: tm.end });
-    else if (tm.start) cur.items.push({ title: 'Promemoria', start: tm.start, end: tm.end });
+    if (title) cur.items.push({ title, start: tm.start, end: tm.end, participants: pp.ids });
+    else if (tm.start) cur.items.push({ title: 'Promemoria', start: tm.start, end: tm.end, participants: pp.ids });
   }
 
   for (const g of groups) {
@@ -2327,13 +2365,13 @@ async function createItems(date, items) {
       let e = null;
       if (it.end) { e = new Date(d0); e.setHours(it.end[0], it.end[1], 0, 0); }
       if (!e || e <= s) e = addMin(s, 60);
-      return { title: it.title, start_at: s.toISOString(), end_at: e.toISOString(), all_day: false };
+      return { title: it.title, start_at: s.toISOString(), end_at: e.toISOString(), all_day: false, participants: it.participants || [] };
     }
-    return { title: it.title, start_at: d0.toISOString(), end_at: addDays(d0, 1).toISOString(), all_day: true };
+    return { title: it.title, start_at: d0.toISOString(), end_at: addDays(d0, 1).toISOString(), all_day: true, participants: it.participants || [] };
   });
   const { data, error } = await sb.from('events').insert(rows).select('id');
   if (error) { addMsg('bot', 'Non sono riuscito a salvare: ' + errText(error)); return; }
-  const lines = rows.map((r) => `• ${r.all_day ? '' : timeStr(new Date(r.start_at)) + ' '}${r.title}`).join('\n');
+  const lines = rows.map((r) => `• ${r.all_day ? '' : timeStr(new Date(r.start_at)) + ' '}${r.title}${r.participants.length ? ' ' + peopleText(r) : ''}`).join('\n');
   const b = addMsg('bot', `✓ ${rows.length > 1 ? 'Aggiunti' : 'Aggiunto'} per ${dayPhrase(d0)}:\n${lines}`, 'ok');
   const box = document.createElement('div');
   box.className = 'chips';
@@ -2364,8 +2402,9 @@ async function qLoad() {
   if (!state.user || !QUICK) return;
   const m = new Date(q.month.getFullYear(), q.month.getMonth(), 1);
   const gs = addDays(m, -((m.getDay() + 6) % 7)), ge = addDays(gs, 42);
-  const { data, error } = await queryEvents(gs, ge, (x) => x.eq('owner_id', state.user.id));
+  const { data: all, error } = await queryEvents(gs, ge);
   if (error) return toast(errText(error), true);
+  const data = all.filter((ev) => ev.owner_id === state.user.id || (ev.participants || []).includes(state.user.id));
   q.days = new Map();
   for (const ev of data) {
     for (const o of occurrences(ev, gs, ge)) {
@@ -2434,6 +2473,7 @@ $('#q-form').addEventListener('submit', (e) => {
   if (!text) return;
   ta.value = '';
   ta.style.height = '';
+  $('#q-suggest').hidden = true;
   handleMessage(text);
 });
 $('#q-text').addEventListener('keydown', (e) => {
@@ -2454,10 +2494,139 @@ $('#q-full').addEventListener('click', () => {
 });
 $('#q-open').addEventListener('click', () => window.open(BASE_URL, '_blank'));
 $('#q-close').addEventListener('click', () => DESKTOP?.postMessage(JSON.stringify({ type: 'close' })));
+$('#q-logout').addEventListener('click', async () => {
+  if (!confirm(`Disconnettere ${state.profile?.display_name || 'questo utente'}?\nPotrai accedere con un altro account.`)) return;
+  await window.renkoLogout();
+});
 document.addEventListener('keydown', (e) => {
   if (QUICK && e.key === 'Escape' && state.board && !document.querySelector('dialog[open]')) { setQuickBoard(false); return; }
   if (QUICK && e.key === 'Escape' && DESKTOP && !document.querySelector('dialog[open]')) DESKTOP.postMessage(JSON.stringify({ type: 'close' }));
 });
+
+// =====================================================================
+//  PARTECIPANTI ("con Mario e Giulia", "insieme a ...")
+// =====================================================================
+const WITH_SRC = '(?:con|insieme(?:\\s+(?:a|con))?|assieme\\s+a)';
+const escRe = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const firstNameOf = (p) => (p.first_name || (p.display_name || '').split(/\s+/)[0] || '').trim();
+
+/** Colleghi (escluso me) con le parole con cui si possono nominare */
+function peopleList() {
+  const me = state.user?.id;
+  const list = state.members.filter((m) => m.user_id !== me && m.profile).map((m) => m.profile);
+  const count = {};
+  list.forEach((p) => { const f = firstNameOf(p).toLowerCase(); count[f] = (count[f] || 0) + 1; });
+  return list.map((p) => {
+    const f = firstNameOf(p);
+    const unique = f && count[f.toLowerCase()] === 1;
+    const names = [p.display_name, unique ? f : null].filter(Boolean);
+    return { id: p.id, color: p.color, label: unique ? f : p.display_name, names: [...new Set(names)] };
+  }).sort((a, b) => a.label.localeCompare(b.label));
+}
+
+function participantNames(row, withMe) {
+  const me = state.user?.id;
+  return (row.participants || []).map((id) => id === me ? (withMe ? 'tu' : null) : (state.profiles.get(id)?.display_name || null))
+    .filter(Boolean).join(', ');
+}
+function peopleText(row) {
+  const me = state.user?.id;
+  const others = (row.participants || []).filter((id) => id !== me).map((id) => state.profiles.get(id)?.display_name?.split(' ')[0]).filter(Boolean);
+  const meToo = (row.participants || []).includes(me) && row.owner_id !== me;
+  const all = meToo ? ['te', ...others] : others;
+  return all.length ? 'con ' + all.join(', ') : '';
+}
+
+/** Toglie "con Mario e Giulia" dal testo e restituisce gli id dei colleghi */
+function extractParticipants(text) {
+  const people = peopleList();
+  if (!people.length) return { ids: [], rest: text };
+  const all = people.flatMap((p) => p.names.map((n) => ({ id: p.id, n }))).sort((a, b) => b.n.length - a.n.length);
+  const alt = all.map((x) => escRe(x.n)).join('|');
+  const re = new RegExp(`\\b${WITH_SRC}\\s+((?:${alt})(?:\\s*(?:,|&|\\be\\b)\\s*(?:${alt}))*)\\b`, 'i');
+  const m = text.match(re);
+  if (!m) return { ids: [], rest: text };
+  const ids = new Set();
+  for (const mm of m[1].matchAll(new RegExp(alt, 'gi'))) {
+    const hit = all.find((x) => x.n.toLowerCase() === mm[0].toLowerCase());
+    if (hit) ids.add(hit.id);
+  }
+  return { ids: [...ids], rest: text.slice(0, m.index) + ' ' + text.slice(m.index + m[0].length) };
+}
+
+/** Suggerimenti mentre si scrive dopo "con" / "insieme a" */
+function suggestFor(text) {
+  const people = peopleList();
+  if (!people.length) return null;
+  const seg = text.split(/[,;\n]/).pop();
+  const trig = [...seg.matchAll(new RegExp(`\\b${WITH_SRC}\\b`, 'gi'))].pop();
+  if (!trig) return null;
+  const tail = seg.slice(trig.index + trig[0].length);
+  if (tail !== '' && !/^\s/.test(tail)) return null;
+  const endsSpace = tail === '' || /\s$/.test(tail);
+  const words = tail.trim() ? tail.trim().split(/\s+/) : [];
+  let partial = endsSpace ? '' : (words.pop() || '');
+  const known = new Set(people.flatMap((p) => p.names.flatMap((n) => n.toLowerCase().split(/\s+/))));
+  if (!words.every((w) => w.toLowerCase() === 'e' || known.has(w.toLowerCase()))) return null;
+  if (partial.toLowerCase() === 'e') partial = '';
+  const named = new Set(people.filter((p) => p.names.some((n) => new RegExp(`\\b${escRe(n)}\\b`, 'i').test(tail))).map((p) => p.id));
+  const list = people.filter((p) => !named.has(p.id) &&
+    (!partial || p.names.some((n) => n.toLowerCase().split(/\s+/).some((w) => w.startsWith(partial.toLowerCase())))));
+  if (!list.length) return null;
+  const lastWord = (endsSpace ? words[words.length - 1] : words[words.length - 1]) || '';
+  return { list, partial, needsE: named.size > 0 && lastWord.toLowerCase() !== 'e' };
+}
+
+/** Collega la barra dei suggerimenti a un campo di testo */
+function attachWithSuggest(input, bar, onPick) {
+  const refresh = () => {
+    const sug = input.selectionStart === input.value.length ? suggestFor(input.value) : null;
+    bar.hidden = !sug;
+    if (!sug) return;
+    bar.innerHTML = '<span class="lbl">Insieme a:</span>';
+    for (const p of sug.list) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip';
+      b.innerHTML = `<span class="dot" style="background:${p.color}"></span>${esc(p.label)}`;
+      b.addEventListener('mousedown', (e) => e.preventDefault());   // non togliere il focus al campo
+      b.addEventListener('click', () => {
+        let v = input.value;
+        if (sug.partial) v = v.slice(0, v.length - sug.partial.length);
+        else if (v && !/\s$/.test(v)) v += ' ';
+        if (sug.needsE) v += 'e ';
+        v += p.label + ' ';
+        input.value = v;
+        input.focus();
+        input.setSelectionRange(v.length, v.length);
+        onPick?.(p.id);
+        input.dispatchEvent(new Event('input'));
+      });
+      bar.append(b);
+    }
+  };
+  input.addEventListener('input', refresh);
+  input.addEventListener('click', refresh);
+  input.addEventListener('blur', () => setTimeout(() => { if (document.activeElement !== input) bar.hidden = true; }, 150));
+}
+
+// scheda impegno: colleghi da spuntare
+let evPeople = new Set();
+function renderPeoplePick() {
+  const box = $('#ev-people');
+  const people = peopleList();
+  box.innerHTML = people.length ? '' : '<span class="muted small">Nessun collega nel gruppo.</span>';
+  for (const p of people) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip' + (evPeople.has(p.id) ? ' sel' : '');
+    b.innerHTML = `<span class="dot" style="background:${p.color}"></span>${esc(p.label)}`;
+    b.addEventListener('click', () => { evPeople.has(p.id) ? evPeople.delete(p.id) : evPeople.add(p.id); renderPeoplePick(); });
+    box.append(b);
+  }
+}
+attachWithSuggest($('#event-form').title, $('#ev-suggest'), (id) => { evPeople.add(id); renderPeoplePick(); });
+attachWithSuggest($('#q-text'), $('#q-suggest'));
 
 // =====================================================================
 //  ALLERTE (avvisi gravi per tutto il gruppo)
@@ -2655,6 +2824,11 @@ async function renderBoard() {
   for (const ev of data) {
     if (!byOwner.has(ev.owner_id)) byOwner.set(ev.owner_id, []);
     byOwner.get(ev.owner_id).push(ev);
+    for (const pid of ev.participants || []) {
+      if (pid === ev.owner_id) continue;
+      if (!byOwner.has(pid)) byOwner.set(pid, []);
+      byOwner.get(pid).push(ev);
+    }
   }
   const now = new Date();
   const collect = (evs, a, b) => {
