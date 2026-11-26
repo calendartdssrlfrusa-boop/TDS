@@ -363,6 +363,31 @@ input.chip { padding: .2rem .5rem; }
 .client-drop button:hover, .client-drop button.hl { background: var(--hover); }
 .client-drop small { color: var(--muted); margin-left: .35rem; }
 .ev-client { font-weight: 600; }
+.cl-filters { display: flex; gap: .4rem; flex-wrap: wrap; margin: -.4rem 0 .9rem; }
+.cl-filters button { border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: .3rem .8rem; font-size: .82rem; cursor: pointer; color: var(--text); }
+.cl-filters button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.cl-filters button small { opacity: .75; margin-left: .2rem; }
+.brand { display: inline-flex; align-items: center; gap: .25rem; font-size: .72rem; font-weight: 600; padding: .12rem .5rem; border-radius: 999px; margin: .15rem .25rem .15rem 0; white-space: nowrap; }
+.brand.rch { background: #e0ecff; color: #1d4ed8; }
+.brand.ital { background: #ffedd5; color: #c2410c; }
+.chk { font-size: .75rem; font-weight: 600; margin-top: .25rem; }
+.chk.late { color: var(--danger); } .chk.soon { color: #b45309; }
+.cl-more { margin: 1rem auto 0; display: block; }
+.dev-list { display: flex; flex-direction: column; gap: .4rem; }
+.dev { border: 1px solid var(--line-soft); border-radius: 12px; padding: .55rem .7rem; font-size: .84rem; }
+.dev-top { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
+.dev-top b { font-size: .9rem; }
+.dev-meta { color: var(--muted); font-size: .78rem; margin-top: .2rem; line-height: 1.5; }
+.st { display: inline-flex; align-items: center; gap: .3rem; font-size: .75rem; }
+.st::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #9aa0a6; }
+.st.on::before { background: #1e8e3e; } .st.off::before { background: #f29900; } .st.none::before { background: #c5c8cc; }
+.cl-tools { display: flex; gap: .5rem; flex-wrap: wrap; }
+#fill-bar { background: var(--surface); border-radius: 12px; padding: .6rem .8rem; margin-bottom: .8rem; font-size: .85rem; display: flex; gap: .6rem; align-items: center; }
+#fill-bar progress { flex: 1; }
+.orphan { display: grid; grid-template-columns: 1fr auto; gap: .5rem; align-items: center; }
+.orphan input { min-width: 0; }
+#import-dialog { width: min(560px, calc(100% - 1.5rem)); height: fit-content; }
+.imp-sum { background: var(--surface); border-radius: 12px; padding: .7rem .9rem; font-size: .88rem; line-height: 1.6; }
 
 /* partecipanti ("con ...") */
 .suggest { display: flex; gap: .35rem; flex-wrap: wrap; align-items: center; }
@@ -863,6 +888,10 @@ dialog::backdrop { background: rgba(15, 17, 40, .35); backdrop-filter: blur(4px)
       <label>Referente <input name="contact" maxlength="80"></label>
     </div>
     <label>Note <textarea name="notes" rows="2"></textarea></label>
+    <div id="client-devices-box" hidden>
+      <h3 style="margin:.3rem 0 .4rem">Casse / registratori</h3>
+      <div class="dev-list" id="client-devices"></div>
+    </div>
     <div id="client-events-box" hidden>
       <h3 style="margin:.3rem 0 .4rem">Impegni con questo cliente</h3>
       <div class="cl-events" id="client-events"></div>
@@ -873,6 +902,37 @@ dialog::backdrop { background: rgba(15, 17, 40, .35); backdrop-filter: blur(4px)
       <span class="spacer"></span>
       <button type="button" class="btn" id="client-newev" hidden><span data-ico="plus"></span> Nuovo impegno</button>
       <button type="submit" class="btn primary">Salva</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- IMPORTAZIONE CASSE -->
+<dialog id="import-dialog">
+  <form id="import-form" class="stack">
+    <div class="row" style="justify-content:space-between">
+      <h2>Importa elenco casse</h2>
+      <button type="button" class="icon-btn sm" id="imp-x" title="Chiudi" data-ico="x"></button>
+    </div>
+    <p class="small muted" style="margin:0">
+      <b>RCH</b>: Excel «Informazioni di dettaglio dei device».<br>
+      <b>Italretail</b>: il file CSV «Tutte le stampanti» scaricato dal portale (va bene anche il PDF «Casse Italretail per modello»).<br>
+      Carica i file così come li scarichi: il formato viene riconosciuto da solo.<br>
+      I clienti vengono creati o aggiornati per partita IVA; le casse per matricola. I dati scritti a mano non vengono sovrascritti.
+    </p>
+    <label>File (puoi sceglierne più di uno insieme) <input type="file" id="imp-file" accept=".xlsx,.xls,.csv,.pdf" multiple></label>
+    <label>Marca
+      <select id="imp-brand">
+        <option value="">Automatica (dalla matricola)</option>
+        <option value="RCH">RCH</option>
+        <option value="ITALRETAIL">Italretail</option>
+      </select>
+    </label>
+    <div class="imp-sum" id="imp-sum" hidden></div>
+    <progress id="imp-prog" max="1" value="0" hidden style="width:100%"></progress>
+    <p class="msg" id="imp-msg"></p>
+    <div class="dialog-actions">
+      <span class="spacer"></span>
+      <button type="submit" class="btn primary" id="imp-go" disabled>Importa</button>
     </div>
   </form>
 </dialog>
@@ -1921,7 +1981,7 @@ function openDetail(fcEvent, el) {
     ${p.mine && row.reminder_minutes != null ? `<div class="pop-row">${ic('bell')}<div>${esc(REMINDER_TEXT[row.reminder_minutes] || row.reminder_minutes + ' minuti prima')}</div></div>` : ''}
     <div class="pop-row">${ic('user')}<div>${esc(owner?.display_name || 'Amministrazione')}${p.mine ? ' <span class="muted">(tu)</span>' : ''}</div></div>
     ${(row.participants || []).length ? `<div class="pop-row">${ic('users')}<div>Insieme a: ${esc(participantNames(row, true))}</div></div>` : ''}
-    ${row.client_id && clientById(row.client_id) ? `<div class="pop-row">${ic('briefcase')}<div><a href="#" data-a="client" class="ev-client">${esc(clientName(row.client_id))}</a></div></div>` : ''}
+    ${row.client_id && clientById(row.client_id) ? `<div class="pop-row">${ic('briefcase')}<div><a href="#" data-a="client" class="ev-client">${esc(clientName(row.client_id))}</a>${brandBadges(row.client_id) ? `<div>${brandBadges(row.client_id)}</div>` : ''}${checkLabel(nextCheck(row.client_id))}</div></div>` : ''}
     ${row.is_private ? `<div class="pop-row">${ic('lock')}<div>Privato</div></div>` : ''}`;
   pop.querySelector('[data-a=close]').onclick = closePopovers;
   const clLink = pop.querySelector('[data-a=client]');
@@ -2607,11 +2667,37 @@ state.clientsView = false;
 const clientById = (id) => state.clients.find((c) => c.id === id);
 const clientName = (id) => (id && clientById(id)?.name) || '';
 
+/** legge tutte le righe (Supabase ne restituisce al massimo 1000 per volta) */
+async function fetchAll(table, orders = ['id']) {
+  const out = [];
+  const step = 1000;
+  for (let from = 0; ; from += step) {
+    let q = sb.from(table).select('*');
+    for (const o of orders) q = q.order(o);
+    const { data, error } = await q.range(from, from + step - 1);
+    if (error) throw error;
+    out.push(...data);
+    if (data.length < step) break;
+  }
+  return out;
+}
+
+state.devices = [];
+state.devByClient = new Map();
 async function loadClients() {
   if (!state.user) return;
-  const { data, error } = await sb.from('clients').select('*').order('name');
-  if (error) { console.warn('clienti:', error.message); return; }
-  state.clients = data;
+  try {
+    state.clients = await fetchAll('clients', ['name', 'id']);
+  } catch (e) { console.warn('clienti:', e.message); return; }
+  try {
+    state.devices = await fetchAll('devices', ['serial']);
+  } catch (e) { state.devices = []; }   // tabella casse non ancora creata (SQL 010)
+  state.devByClient = new Map();
+  for (const d of state.devices) {
+    if (!d.client_id) continue;
+    if (!state.devByClient.has(d.client_id)) state.devByClient.set(d.client_id, []);
+    state.devByClient.get(d.client_id).push(d);
+  }
   if (state.clientsView) renderClients();
 }
 
@@ -2640,31 +2726,591 @@ function setClientsView(on) {
 }
 $('#clients-btn').addEventListener('click', () => setClientsView(!state.clientsView));
 
-let clientFilter = '';
+// ---- casse: stato e marca
+const BRAND_LABEL = { RCH: 'RCH', ITALRETAIL: 'Italretail' };
+function devState(d) {
+  const t = (d.status || '').toLowerCase();
+  if (/disattiv|non attiv|censito|nessun dato/.test(t)) return 'none';
+  if (/offline|fuori servizio|errore/.test(t)) return 'off';
+  if (/in servizio|attivat|online/.test(t)) return 'on';
+  return 'none';
+}
+const devicesOf = (id) => state.devByClient.get(id) || [];
+/** badge marca + modelli (le casse attive per prime) */
+function brandBadges(id) {
+  const devs = devicesOf(id);
+  if (!devs.length) return '';
+  const byBrand = {};
+  for (const d of [...devs].sort((a, b) => (devState(a) === 'none') - (devState(b) === 'none'))) {
+    (byBrand[d.brand] ||= []).push(d);
+  }
+  return Object.entries(byBrand).map(([b, list]) => {
+    const models = [...new Set(list.map((d) => d.model).filter(Boolean))].slice(0, 2).join(', ');
+    return `<span class="brand ${b === 'RCH' ? 'rch' : 'ital'}">${BRAND_LABEL[b] || b}${models ? ' · ' + esc(models) : ''}${list.length > 1 ? ' ×' + list.length : ''}</span>`;
+  }).join('');
+}
+function brandText(id) {
+  const bs = [...new Set(devicesOf(id).map((d) => BRAND_LABEL[d.brand] || d.brand))];
+  return bs.join(' + ');
+}
+/** prossima verifica periodica tra le casse non disattivate */
+function nextCheck(id) {
+  const ds = devicesOf(id).filter((d) => d.next_check && devState(d) !== 'none').map((d) => d.next_check).sort();
+  return ds[0] || null;
+}
+const dayDiff = (iso) => Math.round((new Date(iso + 'T00:00:00') - sod(new Date())) / 86400000);
+const itDate = (iso) => iso ? iso.slice(0, 10).split('-').reverse().join('/') : '';
+function checkLabel(iso) {
+  if (!iso) return '';
+  const n = dayDiff(iso);
+  if (n < 0) return `<div class="chk late">⚠ Verifica periodica scaduta il ${itDate(iso)}</div>`;
+  if (n <= 30) return `<div class="chk soon">Verifica periodica tra ${n} gg (${itDate(iso)})</div>`;
+  return '';
+}
+
+// ---- elenco clienti
+let clientFilter = '', clientMode = 'all', clientLimit = 120;
+const CLIENT_MODES = [
+  ['all', 'Tutti'],
+  ['RCH', 'RCH'],
+  ['ITALRETAIL', 'Italretail'],
+  ['late', 'Verifica scaduta'],
+  ['soon', 'Verifica entro 30 gg'],
+  ['orphans', 'Casse senza cliente'],
+];
+function clientInMode(c, mode) {
+  if (mode === 'all') return true;
+  if (mode === 'RCH' || mode === 'ITALRETAIL') return devicesOf(c.id).some((d) => d.brand === mode);
+  const nc = nextCheck(c.id);
+  if (mode === 'late') return nc && dayDiff(nc) < 0;
+  if (mode === 'soon') return nc && dayDiff(nc) >= 0 && dayDiff(nc) <= 30;
+  return true;
+}
+function clientMatches(c, f) {
+  if (!f) return true;
+  if ([c.name, c.city, c.vat, c.contact, c.phone, c.email].some((x) => (x || '').toLowerCase().includes(f))) return true;
+  return devicesOf(c.id).some((d) => d.serial.toLowerCase().includes(f) || d.model.toLowerCase().includes(f));
+}
+const isAdmin = () => state.profile?.role === 'admin';
+
 function renderClients() {
   const box = $('#clients-view');
   if (!box.querySelector('.cl-head')) {
     box.innerHTML = `<div class="cl-head"><h2>Clienti</h2><span class="muted small" id="cl-count"></span>
-      <input id="cl-search" placeholder="Cerca per nome, città, P.IVA…" autocomplete="off">
-      <button class="btn primary" id="cl-new">${ic('plus')} Nuovo cliente</button></div><div class="cl-grid" id="cl-grid"></div>`;
-    $('#cl-search').addEventListener('input', (e) => { clientFilter = e.target.value; renderClients(); });
+      <input id="cl-search" placeholder="Cerca per nome, città, P.IVA, matricola…" autocomplete="off">
+      <div class="cl-tools">
+        <button class="btn" id="cl-fill" title="Compila ragione sociale e indirizzo dei clienti a cui mancano, dall'archivio VIES">${ic('search')} Completa da P.IVA</button>
+        <button class="btn" id="cl-import" hidden>${ic('plus')} Importa casse</button>
+        <button class="btn primary" id="cl-new">${ic('plus')} Nuovo cliente</button>
+      </div></div>
+      <div class="cl-filters" id="cl-filters"></div>
+      <div id="fill-bar" hidden><span id="fill-txt"></span><progress id="fill-prog" max="1" value="0"></progress><button class="btn" id="fill-stop">Ferma</button></div>
+      <div class="cl-grid" id="cl-grid"></div>
+      <button class="btn cl-more" id="cl-more" hidden>Mostra altri</button>
+      <datalist id="cl-datalist"></datalist>`;
+    $('#cl-search').addEventListener('input', (e) => { clientFilter = e.target.value; clientLimit = 120; renderClients(); });
     $('#cl-new').addEventListener('click', () => openClient(null));
+    $('#cl-import').addEventListener('click', openImport);
+    $('#cl-fill').addEventListener('click', fillFromVat);
+    $('#fill-stop').addEventListener('click', () => { fillStop = true; });
+    $('#cl-more').addEventListener('click', () => { clientLimit += 200; renderClients(); });
+  }
+  $('#cl-import').hidden = !isAdmin();
+  const orphans = state.devices.filter((d) => !d.client_id);
+  $('#cl-filters').innerHTML = '';
+  for (const [k, label] of CLIENT_MODES) {
+    if (k !== 'all' && !state.devices.length) continue;
+    if (k === 'orphans' && !orphans.length) continue;
+    const n = k === 'orphans' ? orphans.length : state.clients.filter((c) => clientInMode(c, k)).length;
+    if ((k === 'late' || k === 'soon') && !n) continue;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = clientMode === k ? 'active' : '';
+    b.innerHTML = `${label}<small>${n}</small>`;
+    b.addEventListener('click', () => { clientMode = k; clientLimit = 120; renderClients(); });
+    $('#cl-filters').append(b);
   }
   const f = clientFilter.trim().toLowerCase();
-  const list = state.clients.filter((c) => !f || [c.name, c.city, c.vat, c.contact, c.phone, c.email].some((x) => (x || '').toLowerCase().includes(f)));
-  $('#cl-count').textContent = `${list.length} di ${state.clients.length}`;
   const grid = $('#cl-grid');
-  grid.innerHTML = list.length ? '' : `<p class="muted">${state.clients.length ? 'Nessun cliente trovato.' : 'Ancora nessun cliente: premi «Nuovo cliente».'}</p>`;
-  for (const c of list) {
+  grid.innerHTML = '';
+
+  if (clientMode === 'orphans') {
+    const list = orphans.filter((d) => !f || d.serial.toLowerCase().includes(f) || d.model.toLowerCase().includes(f));
+    $('#cl-count').textContent = `${list.length} casse senza cliente`;
+    $('#cl-datalist').innerHTML = state.clients.map((c) => `<option value="${esc(c.name)}">`).join('');
+    for (const d of list.slice(0, clientLimit)) {
+      const el = document.createElement('div');
+      el.className = 'cl-card';
+      el.style.cursor = 'default';
+      el.innerHTML = `${deviceHtml(d)}${isAdmin() ? `<div class="orphan" style="margin-top:.5rem">
+        <input list="cl-datalist" placeholder="Collega al cliente…"><button class="btn">Collega</button></div>` : ''}`;
+      if (isAdmin()) el.querySelector('.orphan button').addEventListener('click', async () => {
+        const v = el.querySelector('.orphan input').value.trim().toLowerCase();
+        const c = state.clients.find((x) => x.name.toLowerCase() === v);
+        if (!c) return toast('Scegli un cliente dall\'elenco', true);
+        const { error } = await sb.from('devices').update({ client_id: c.id }).eq('id', d.id);
+        if (error) return toast(errText(error), true);
+        toast(`Cassa ${d.serial} collegata a ${c.name}`);
+        loadClients();
+      });
+      grid.append(el);
+    }
+    $('#cl-more').hidden = list.length <= clientLimit;
+    return;
+  }
+
+  const list = state.clients.filter((c) => clientInMode(c, clientMode) && clientMatches(c, f));
+  if (clientMode === 'late' || clientMode === 'soon') list.sort((a, b) => (nextCheck(a.id) || '').localeCompare(nextCheck(b.id) || ''));
+  $('#cl-count').textContent = `${list.length} di ${state.clients.length}`;
+  if (!list.length) grid.innerHTML = `<p class="muted">${state.clients.length ? 'Nessun cliente trovato.' : 'Ancora nessun cliente: premi «Nuovo cliente»' + (isAdmin() ? ' o «Importa casse».' : '.')}</p>`;
+  for (const c of list.slice(0, clientLimit)) {
     const el = document.createElement('div');
     el.className = 'cl-card';
-    el.innerHTML = `<b>${esc(c.name)}</b><div class="muted">
-      ${c.city ? esc(c.city) + (c.province ? ` (${esc(c.province)})` : '') + '<br>' : ''}
-      ${c.vat ? 'P.IVA ' + esc(c.vat) + '<br>' : ''}${c.phone ? '☎ ' + esc(c.phone) : ''}${c.contact ? ' · ' + esc(c.contact) : ''}</div>`;
+    el.innerHTML = `<b>${esc(c.name)}</b>${brandBadges(c.id) ? `<div>${brandBadges(c.id)}</div>` : ''}<div class="muted">
+      ${c.city ? esc(c.city) + (c.province ? ` (${esc(c.province)})` : '') + '<br>' : c.province ? 'Prov. ' + esc(c.province) + '<br>' : ''}
+      ${c.vat ? 'P.IVA ' + esc(c.vat) + '<br>' : ''}${c.phone ? '☎ ' + esc(c.phone) : ''}${c.contact ? ' · ' + esc(c.contact) : ''}</div>${checkLabel(nextCheck(c.id))}`;
     el.addEventListener('click', () => openClient(c.id));
     grid.append(el);
   }
+  $('#cl-more').hidden = list.length <= clientLimit;
 }
+
+function deviceHtml(d) {
+  const st = devState(d);
+  const meta = [
+    d.firmware && 'FW ' + esc(d.firmware),
+    d.next_check && `Prossima verifica <b class="${dayDiff(d.next_check) < 0 && st !== 'none' ? 'chk late' : ''}">${itDate(d.next_check)}</b>`,
+    d.cert_expiry && 'Certificato fino al ' + itDate(d.cert_expiry),
+    d.dgfe_used && (d.brand === 'RCH' ? 'DGFE ' : 'Giornale elettr. ') + esc(d.dgfe_used),
+    d.last_check && 'Ultima verifica ' + itDate(d.last_check),
+    d.extra?.powerup && d.extra.powerup !== 'Non attiva' && 'PowerUp: ' + esc(d.extra.powerup),
+    d.extra?.connessione && d.extra.connessione !== 'N.D.' && esc(d.extra.connessione),
+    d.last_seen && 'Ultima attività ' + new Date(d.last_seen).toLocaleString('it-IT', { dateStyle: 'short', timeStyle: 'short' }),
+    !d.client_id && d.province && esc(d.province),
+  ].filter(Boolean).join(' · ');
+  return `<div class="dev-top"><span class="brand ${d.brand === 'RCH' ? 'rch' : 'ital'}">${BRAND_LABEL[d.brand] || d.brand}</span>
+    <b>${esc(d.model || 'Cassa')}</b><span class="muted">${esc(d.serial)}</span><span class="spacer"></span>
+    <span class="st ${st}">${esc(d.status || '—')}</span></div>${meta ? `<div class="dev-meta">${meta}</div>` : ''}${
+    (d.extra?.avvisi || []).length ? `<div class="chk late">⚠ ${esc(d.extra.avvisi.join(' · '))}</div>` : ''}`;
+}
+
+// ---- completa i clienti dalla partita IVA (archivio VIES), uno alla volta
+let fillStop = false, filling = false;
+async function fillFromVat() {
+  if (filling) return;
+  const tried = new Set(store.get('rc.vatTried', []));
+  const todo = state.clients.filter((c) => pivaOk(c.vat) && (c.name.startsWith('P.IVA ') || !c.address) && !tried.has(c.vat));
+  if (!todo.length) return toast('Nessun cliente da completare: hanno già nome e indirizzo (o la P.IVA non è valida).');
+  if (!confirm(`Cerco i dati di ${todo.length} clienti nell'archivio VIES (circa ${Math.ceil(todo.length * 1.2 / 60)} minuti).\nCompilo solo ragione sociale mancante e indirizzo vuoto. Puoi fermare quando vuoi.`)) return;
+  filling = true; fillStop = false;
+  $('#fill-bar').hidden = false;
+  const prog = $('#fill-prog');
+  prog.max = todo.length;
+  let ok = 0, done = 0;
+  for (const c of todo) {
+    if (fillStop) break;
+    $('#fill-txt').textContent = `Completo da P.IVA: ${done}/${todo.length} (${ok} aggiornati)…`;
+    try {
+      const { data, error } = await sb.functions.invoke('lookup-vat', { body: { vat: c.vat } });
+      if (error) throw error;
+      tried.add(c.vat);
+      if (data?.ok && data.valid) {
+        const upd = {};
+        if (c.name.startsWith('P.IVA ') && data.name) upd.name = data.name;
+        if (!c.address && data.address) { upd.address = data.address; upd.zip = c.zip || data.zip; upd.city = c.city || data.city; upd.province = c.province || data.province; }
+        if (Object.keys(upd).length) {
+          const r = await sb.from('clients').update(upd).eq('id', c.id);
+          if (!r.error) { Object.assign(c, upd); ok++; }
+        }
+      }
+    } catch (e) {
+      if (/non-2xx|500|429|timeout/i.test(e.message || '')) await new Promise((r) => setTimeout(r, 4000));
+    }
+    done++;
+    prog.value = done;
+    store.set('rc.vatTried', [...tried]);
+    await new Promise((r) => setTimeout(r, 700));   // per non sovraccaricare VIES
+  }
+  filling = false;
+  $('#fill-bar').hidden = true;
+  toast(`Completati ${ok} clienti su ${done} controllati`);
+  loadClients();
+}
+
+// ---- importazione elenchi casse
+// =====================================================================
+//  IMPORTAZIONE CASSE (RCH Excel, Italretail PDF/Excel) — funzioni pure
+// =====================================================================
+const PROVINCE = {
+  agrigento: 'AG', alessandria: 'AL', ancona: 'AN', aosta: 'AO', 'valle d\'aosta': 'AO', arezzo: 'AR', 'ascoli piceno': 'AP', asti: 'AT',
+  avellino: 'AV', bari: 'BA', 'barletta-andria-trani': 'BT', belluno: 'BL', benevento: 'BN', bergamo: 'BG', biella: 'BI', bologna: 'BO',
+  bolzano: 'BZ', brescia: 'BS', brindisi: 'BR', cagliari: 'CA', caltanissetta: 'CL', campobasso: 'CB', caserta: 'CE', catania: 'CT',
+  catanzaro: 'CZ', chieti: 'CH', como: 'CO', cosenza: 'CS', cremona: 'CR', crotone: 'KR', cuneo: 'CN', enna: 'EN', fermo: 'FM',
+  ferrara: 'FE', firenze: 'FI', foggia: 'FG', 'forlì-cesena': 'FC', 'forli-cesena': 'FC', frosinone: 'FR', genova: 'GE', gorizia: 'GO',
+  grosseto: 'GR', imperia: 'IM', isernia: 'IS', 'l\'aquila': 'AQ', 'la spezia': 'SP', latina: 'LT', lecce: 'LE', lecco: 'LC',
+  livorno: 'LI', lodi: 'LO', lucca: 'LU', macerata: 'MC', mantova: 'MN', 'massa-carrara': 'MS', 'massa carrara': 'MS', matera: 'MT',
+  messina: 'ME', milano: 'MI', modena: 'MO', 'monza e della brianza': 'MB', 'monza e brianza': 'MB', napoli: 'NA', novara: 'NO',
+  nuoro: 'NU', oristano: 'OR', padova: 'PD', palermo: 'PA', parma: 'PR', pavia: 'PV', perugia: 'PG', 'pesaro e urbino': 'PU',
+  pescara: 'PE', piacenza: 'PC', pisa: 'PI', pistoia: 'PT', pordenone: 'PN', potenza: 'PZ', prato: 'PO', ragusa: 'RG', ravenna: 'RA',
+  'reggio calabria': 'RC', 'reggio di calabria': 'RC', 'reggio emilia': 'RE', "reggio nell'emilia": 'RE', rieti: 'RI', rimini: 'RN',
+  roma: 'RM', rovigo: 'RO', salerno: 'SA', sassari: 'SS', savona: 'SV', siena: 'SI', siracusa: 'SR', sondrio: 'SO',
+  'sud sardegna': 'SU', taranto: 'TA', teramo: 'TE', terni: 'TR', torino: 'TO', trapani: 'TP', trento: 'TN', treviso: 'TV',
+  trieste: 'TS', udine: 'UD', varese: 'VA', venezia: 'VE', 'verbano-cusio-ossola': 'VB', vercelli: 'VC', verona: 'VR',
+  'vibo valentia': 'VV', vicenza: 'VI', viterbo: 'VT',
+};
+const provCode = (name) => {
+  const n = String(name || '').trim().toLowerCase();
+  if (/^[a-z]{2}$/.test(n)) return n.toUpperCase();
+  return PROVINCE[n] || '';
+};
+const cleanCell = (v) => {
+  if (v == null) return '';
+  const s = String(v).replace(/<[^>]*>/g, ' ').replace(/\{\{[^}]*\}\}/g, ' ').replace(/\s+/g, ' ').trim();
+  return s === '-' || /^info mancante$/i.test(s) ? '' : s;
+};
+const brandOf = (serial, hint) => (/^72/.test(serial) ? 'RCH' : /^1B/i.test(serial) ? 'ITALRETAIL' : hint || '');
+const pad2 = (n) => String(n).padStart(2, '0');
+
+/** data: numero di Excel, Date o "gg/mm/aaaa" → "aaaa-mm-gg" (o "") */
+function toDateStr(v, SSF) {
+  if (v == null || v === '' || v === '-') return '';
+  if (typeof v === 'number' && SSF) {
+    const d = SSF.parse_date_code(v);
+    return d && d.y >= 1950 ? `${d.y}-${pad2(d.m)}-${pad2(d.d)}` : '';
+  }
+  if (v instanceof Date) return `${v.getFullYear()}-${pad2(v.getMonth() + 1)}-${pad2(v.getDate())}`;
+  const m = String(v).match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})/);
+  if (m) return +m[3] < 1950 ? '' : `${m[3]}-${pad2(m[2])}-${pad2(m[1])}`;
+  const m2 = String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m2 ? m2[0] : '';
+}
+/** data e ora (ora locale) → ISO */
+function toStamp(v, SSF) {
+  if (v == null || v === '' || v === '-') return '';
+  let y, mo, d, h = 0, mi = 0, s = 0;
+  if (typeof v === 'number' && SSF) {
+    const p = SSF.parse_date_code(v);
+    if (!p) return '';
+    ({ y, m: mo, d, H: h, M: mi, S: s } = p);
+  } else if (v instanceof Date) return v.toISOString();
+  else {
+    const m = String(v).match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+    if (!m || +m[3] < 1950) return '';
+    [d, mo, y, h, mi, s] = [m[1], m[2], m[3], m[4] || 0, m[5] || 0, m[6] || 0].map(Number);
+  }
+  return new Date(y, mo - 1, d, h, mi, Math.round(s)).toISOString();
+}
+
+const COLS = [
+  ['serial', /numero\s*seriale|matricola|^serial/i],
+  ['merchant', /^(merchant|esercente|ragione\s*sociale|cliente)$/i],
+  ['vat', /p\.?\s*iva|partita/i],
+  ['region', /^regione/i],
+  ['province', /^provincia/i],
+  ['part_number', /part\s*number/i],
+  ['firmware', /firmware|^fw$/i],
+  ['dgfe_size', /memoria\s*dgfe/i],
+  ['dgfe_used', /percentuale\s*dgfe|riempimento\s*ej/i],
+  ['status', /^stato/i],
+  ['fiscal_memory', /memoria\s*fiscale/i],
+  ['model', /^modello/i],
+  ['end_date', /fine\s*device/i],
+  ['cert_expiry', /scadenza\s*certificato/i],
+  ['next_check', /prossima\s*verifica|scadenza\s*verifica/i],
+  ['last_check', /ultima\s*verifica/i],
+  ['fiscal_date', /data\s*fiscalizzazione/i],
+  ['last_seen', /ultima\s*(attivit|rilevaz)/i],
+  ['zip', /^cap$/i],
+];
+const DATE_KEYS = ['end_date', 'cert_expiry', 'next_check', 'last_check', 'fiscal_date'];
+/** colonne extra (portale Italretail) salvate così come sono */
+const EXTRA = [
+  ['powerup', /stato\s*licenza\s*powerup/i],
+  ['lotteria_istantanea', /stato\s*licenza\s*lotteria/i],
+  ['connessione', /connessione\s*con\s*ae/i],
+  ['ultima_chiusura', /ultima\s*chiusura/i],
+  ['messa_in_servizio', /messa\s*in\s*servizio/i],
+  ['azzeramenti', /^azzeramenti$/i],
+];
+/** colonne vero/falso che diventano avvisi */
+const WARN = [
+  ['Memoria fiscale esaurita', /^mf\s*esaurita/i], ['Memoria fiscale quasi esaurita', /^mf\s*quasi/i],
+  ['Giornale elettronico pieno', /^ej\s*pieno/i], ['Giornale elettronico quasi pieno', /^ej\s*quasi/i],
+  ['Certificato scaduto', /^certificato\s*scaduto/i], ['Certificato quasi scaduto', /^certificato\s*quasi/i],
+];
+/** icone di stato del portale Italretail */
+const ICON_STATUS = [
+  [/smile/, 'Online'], [/meh/, 'Online (con avvisi)'], [/calendar-times/, 'Offline'], [/frown/, 'Offline (errore)'],
+];
+
+/** righe del foglio (array di array) → righe da importare */
+function rowsFromSheet(aoa, hint, SSF) {
+  const hi = aoa.findIndex((r) => (r || []).some((c) => /numero\s*seriale|matricola/i.test(String(c ?? ''))));
+  if (hi < 0) throw new Error('Non trovo la colonna «Numero Seriale» o «Matricola» nel file.');
+  const head = aoa[hi].map((c) => String(c ?? '').trim());
+  const idx = {};
+  for (const [k, re] of COLS) {
+    const i = head.findIndex((h) => re.test(h));
+    if (i >= 0 && idx[k] == null) idx[k] = i;
+  }
+  const extraIdx = EXTRA.map(([k, re]) => [k, head.findIndex((h) => re.test(h))]).filter(([, i]) => i >= 0);
+  const warnIdx = WARN.map(([k, re]) => [k, head.findIndex((h) => re.test(h))]).filter(([, i]) => i >= 0);
+  const out = [];
+  let model = '';
+  for (const r of aoa.slice(hi + 1)) {
+    if (!r) continue;
+    const get = (k) => (idx[k] == null ? '' : r[idx[k]]);
+    const serial = cleanCell(get('serial')).replace(/\s/g, '').toUpperCase();
+    if (!serial || /^matricola|^numero/i.test(serial)) continue;
+    const row = { serial };
+    for (const [k] of COLS) {
+      if (k === 'serial') continue;
+      const v = get(k);
+      if (DATE_KEYS.includes(k)) row[k] = toDateStr(v, SSF);
+      else if (k === 'last_seen') row[k] = toStamp(v, SSF);
+      else row[k] = cleanCell(v);
+    }
+    if (typeof get('dgfe_used') === 'number' && get('dgfe_used') <= 1) row.dgfe_used = Math.round(get('dgfe_used') * 100) + '%';
+    else if (/^\d+([.,]\d+)?$/.test(row.dgfe_used)) row.dgfe_used += '%';
+    // stato come icona (portale Italretail): vuoto = non attiva
+    const rawStatus = String(get('status') ?? '');
+    if (/\{\{icon/.test(rawStatus) || (idx.status != null && !row.status && /^1B/i.test(serial))) {
+      row.status = (ICON_STATUS.find(([re]) => re.test(rawStatus)) || [null, rawStatus.trim() ? 'Online' : 'Non attiva'])[1];
+    }
+    row.zip = /^\d{5}$/.test(row.zip) ? row.zip : '';
+    const extra = {};
+    for (const [k, i] of extraIdx) { const v = cleanCell(r[i]); if (v && v !== '-1' && !/30\/12\/1899/.test(v)) extra[k] = v; }
+    const warns = warnIdx.filter(([, i]) => String(r[i]).trim().toLowerCase() === 'true').map(([k]) => k);
+    if (warns.length) extra.avvisi = warns;
+    row.extra = extra;
+    row.model = row.model || model;
+    row.brand = brandOf(serial, hint);
+    row.province_code = provCode(row.province);
+    if (/info mancante/i.test(row.region)) row.region = '';
+    if (/info mancante/i.test(row.province)) row.province = '';
+    out.push(row);
+  }
+  return out;
+}
+
+/** CSV (separatore ; o , o tab, con virgolette) → array di array */
+function parseCsv(text) {
+  const first = text.split(/\r?\n/).find((l) => /matricola|seriale/i.test(l)) || text.split(/\r?\n/)[0];
+  const sep = [';', '\t', ','].sort((a, b) => first.split(b).length - first.split(a).length)[0];
+  const rows = [];
+  let row = [], cell = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) {
+      if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; }
+      else cell += ch;
+    } else if (ch === '"') q = true;
+    else if (ch === sep) { row.push(cell); cell = ''; }
+    else if (ch === '\n' || ch === '\r') {
+      if (ch === '\r' && text[i + 1] === '\n') i++;
+      row.push(cell); rows.push(row); row = []; cell = '';
+    } else cell += ch;
+  }
+  if (cell || row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
+/** testo del file: UTF-8, altrimenti Windows-1252 (export del portale) */
+function decodeText(buf) {
+  try { return new TextDecoder('utf-8', { fatal: true }).decode(buf); }
+  catch { return new TextDecoder('windows-1252').decode(buf); }
+}
+
+/** pdf.js: pagine di {s, x, y} → righe di testo (in ordine di lettura) */
+function pdfLines(pages) {
+  const lines = [];
+  for (const items of pages) {
+    const sorted = items.filter((i) => i.s.trim()).sort((a, b) => b.y - a.y || a.x - b.x);
+    let cur = null;
+    for (const it of sorted) {
+      if (!cur || Math.abs(cur.y - it.y) > 3) { cur = { y: it.y, items: [] }; lines.push(cur); }
+      cur.items.push(it);
+    }
+    for (const l of lines) l.items.sort((a, b) => a.x - b.x);
+  }
+  return lines.map((l) => l.items);
+}
+
+/** elenco Italretail in PDF ("CASSE ITALRETAIL PER MODELLO") → righe da importare */
+function rowsFromPdf(lines, hint) {
+  const out = [];
+  let detail = false, model = '', head = null;
+  const STATUS = /^(online|offline|non attiv|\(errore\)|errore)/i;
+  const DATE = /^\d{1,2}\/\d{1,2}\/\d{4}(\s+\d{1,2}:\d{2})?$/;
+  for (const items of lines) {
+    const first = items[0].s.trim();
+    if (/^DETTAGLIO PER MODELLO/i.test(first)) { detail = true; continue; }
+    if (!detail) continue;
+    if (/^matricola$/i.test(first)) {
+      head = {};
+      for (const it of items) {
+        const t = it.s.trim().toLowerCase();
+        if (t.startsWith('esercente')) head.merchant = it.x;
+        else if (t.startsWith('p.iva') || t.startsWith('p. iva')) head.vat = it.x;
+        else if (t === 'fw' || t.startsWith('firmware')) head.firmware = it.x;
+        else if (t.startsWith('ultima')) head.last_seen = it.x;
+        else if (t.startsWith('stato')) head.status = it.x;
+      }
+      continue;
+    }
+    if (/^totale/i.test(first) || /PER MODELLO|^situazione|^legenda|^pagina/i.test(first)) continue;
+    const isSerial = /^[0-9A-Z]{6,}$/.test(first) && items[0].x < 120 && items.length > 1;
+    if (!isSerial) {
+      if (items.length === 1 && items[0].x < 120) model = first;   // titolo del modello
+      continue;
+    }
+    const row = { serial: first.toUpperCase(), model, merchant: '', vat: '', firmware: '', last_seen: '', status: '' };
+    const cols = Object.entries(head || { merchant: 147, vat: 402, firmware: 476, last_seen: 525, status: 640 });
+    for (const it of items.slice(1)) {
+      const t = it.s.trim();
+      let key;
+      if (STATUS.test(t)) key = 'status';
+      else if (DATE.test(t)) key = 'last_seen';
+      else key = cols.reduce((best, [k, x]) => (Math.abs(x - it.x) < Math.abs(best[1] - it.x) ? [k, x] : best), cols[0])[0];
+      if (key === 'last_seen') row.last_seen = toStamp(t);
+      else row[key] = row[key] ? row[key] + ' ' + t : t;
+    }
+    row.brand = brandOf(row.serial, hint || 'ITALRETAIL');
+    row.province_code = '';
+    out.push(row);
+  }
+  return out;
+}
+
+/** Riepilogo prima di importare */
+function importSummary(rows) {
+  const vats = new Set(rows.map((r) => r.vat).filter((v) => /^[0-9A-Z]{11,16}$/i.test(v)));
+  const byBrand = {};
+  for (const r of rows) byBrand[r.brand || '?'] = (byBrand[r.brand || '?'] || 0) + 1;
+  return {
+    total: rows.length,
+    clients: vats.size,
+    noClient: rows.filter((r) => !/^[0-9A-Z]{11,16}$/i.test(r.vat) && !r.merchant).length,
+    byBrand,
+    unknownBrand: rows.filter((r) => !r.brand).length,
+  };
+}
+
+const loadScript = (src) => new Promise((ok, ko) => {
+  if ([...document.scripts].some((x) => x.src === src)) return ok();
+  const el = document.createElement('script');
+  el.src = src; el.onload = ok; el.onerror = () => ko(new Error('Impossibile caricare ' + src));
+  document.head.append(el);
+});
+const XLSX_URL = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+const PDFJS_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs';
+const PDFJS_WORKER = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
+
+async function readImportFile(file, hint) {
+  const buf = await file.arrayBuffer();
+  if (/\.pdf$/i.test(file.name)) {
+    const pdfjs = await import(PDFJS_URL);
+    if (!pdfjs.GlobalWorkerOptions.workerPort) {
+      const blob = new Blob([`import "${PDFJS_WORKER}";`], { type: 'text/javascript' });
+      pdfjs.GlobalWorkerOptions.workerPort = new Worker(URL.createObjectURL(blob), { type: 'module' });
+    }
+    const doc = await pdfjs.getDocument({ data: new Uint8Array(buf), verbosity: 0 }).promise;
+    const pages = [];
+    for (let i = 1; i <= doc.numPages; i++) {
+      const tc = await (await doc.getPage(i)).getTextContent();
+      pages.push(tc.items.map((it) => ({ s: it.str, x: it.transform[4], y: it.transform[5] })));
+    }
+    const rows = rowsFromPdf(pdfLines(pages), hint);
+    if (!rows.length) throw new Error('Nel PDF non ho trovato righe di casse (serve l\'elenco «Casse … per modello» con la parte DETTAGLIO).');
+    return rows;
+  }
+  await loadScript(XLSX_URL);
+  if (/\.(csv|txt)$/i.test(file.name)) {
+    const rows = rowsFromSheet(parseCsv(decodeText(buf)), hint, XLSX.SSF);
+    if (!rows.length) throw new Error('Nel file non ho trovato righe di casse.');
+    return rows;
+  }
+  const wb = XLSX.read(buf, { type: 'array' });
+  let rows = [];
+  for (const name of wb.SheetNames) {
+    const aoa = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, raw: true, defval: '' });
+    try { rows = rows.concat(rowsFromSheet(aoa, hint, XLSX.SSF)); } catch (e) { if (wb.SheetNames.length === 1) throw e; }
+  }
+  if (!rows.length) throw new Error('Nel file non ho trovato righe di casse.');
+  return rows;
+}
+
+let importRows = null;
+function openImport() {
+  importRows = null;
+  $('#import-form').reset();
+  $('#imp-sum').hidden = true;
+  $('#imp-prog').hidden = true;
+  $('#imp-msg').textContent = '';
+  $('#imp-go').disabled = true;
+  $('#import-dialog').showModal();
+}
+$('#imp-x').addEventListener('click', () => $('#import-dialog').close());
+async function analyzeImport() {
+  const files = [...$('#imp-file').files];
+  importRows = null;
+  $('#imp-go').disabled = true;
+  if (!files.length) return;
+  $('#imp-msg').textContent = 'Leggo ' + (files.length > 1 ? `${files.length} file…` : 'il file…');
+  $('#imp-sum').hidden = true;
+  try {
+    // più file insieme: una riga per matricola (l'ultimo file vince)
+    const bySerial = new Map();
+    for (const f of files) {
+      try { for (const r of await readImportFile(f, $('#imp-brand').value)) bySerial.set(r.serial, r); }
+      catch (e) { throw new Error(`${f.name}: ${e.message || e}`); }
+    }
+    const rows = [...bySerial.values()];
+    const sum = importSummary(rows);
+    if (sum.unknownBrand) throw new Error(`${sum.unknownBrand} casse senza marca riconoscibile: scegli la marca qui sopra.`);
+    const existing = new Set(state.devices.map((d) => d.serial));
+    const known = new Set(state.clients.map((c) => c.vat).filter(Boolean));
+    const vats = new Set(rows.map((r) => r.vat).filter((v) => /^[0-9A-Z]{11,16}$/i.test(v)));
+    importRows = rows;
+    $('#imp-sum').innerHTML = `<b>${sum.total}</b> casse trovate (${Object.entries(sum.byBrand).map(([b, n]) => `${BRAND_LABEL[b] || b}: ${n}`).join(', ')})<br>
+      ${rows.filter((r) => existing.has(r.serial)).length} già presenti (verranno aggiornate) · ${rows.filter((r) => !existing.has(r.serial)).length} nuove<br>
+      <b>${vats.size}</b> clienti (P.IVA) · ${[...vats].filter((v) => !known.has(v)).length} nuovi<br>
+      ${rows.filter((r) => !r.vat && !r.merchant).length} casse senza cliente nell'elenco (le trovi in «Casse senza cliente»)`;
+    $('#imp-sum').hidden = false;
+    $('#imp-msg').textContent = '';
+    $('#imp-go').disabled = false;
+  } catch (e) {
+    $('#imp-msg').textContent = e.message || String(e);
+  }
+}
+$('#imp-file').addEventListener('change', analyzeImport);
+$('#imp-brand').addEventListener('change', analyzeImport);
+$('#import-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!importRows) return;
+  const rows = importRows;
+  const prog = $('#imp-prog');
+  prog.hidden = false; prog.max = rows.length; prog.value = 0;
+  $('#imp-go').disabled = true;
+  const tot = { new_clients: 0, updated_clients: 0, new_devices: 0, updated_devices: 0, without_client: 0 };
+  try {
+    for (let i = 0; i < rows.length; i += 250) {
+      $('#imp-msg').textContent = `Importo… ${i}/${rows.length}`;
+      const { data, error } = await sb.rpc('import_devices', { p_rows: rows.slice(i, i + 250) });
+      if (error) throw error;
+      for (const k in tot) tot[k] += data?.[k] || 0;
+      prog.value = Math.min(rows.length, i + 250);
+    }
+    $('#imp-msg').textContent = '';
+    $('#imp-sum').innerHTML = `✓ Importazione completata<br>Casse: <b>${tot.new_devices}</b> nuove, ${tot.updated_devices} aggiornate<br>
+      Clienti: <b>${tot.new_clients}</b> nuovi, ${tot.updated_clients} completati<br>${tot.without_client} casse senza cliente`;
+    importRows = null;
+    await loadClients();
+  } catch (err) {
+    $('#imp-msg').textContent = /import_devices|function/i.test(err.message || '') && /not find|does not exist/i.test(err.message || '')
+      ? 'Manca la funzione su Supabase: esegui 010_casse.sql.' : errText(err);
+    $('#imp-go').disabled = false;
+  }
+});
 
 // ---- scheda cliente
 let clientEditing = null, clientOnSaved = null;
@@ -2677,13 +3323,18 @@ async function openClient(id, preset = {}, onSaved = null) {
   const f = $('#client-form');
   f.reset();
   for (const k of CLIENT_FIELDS) f[k].value = (c ? c[k] : preset[k]) || '';
-  $('#client-title').textContent = c ? c.name : 'Nuovo cliente';
+  $('#client-title').innerHTML = c ? esc(c.name) + (brandText(c.id) ? ` <span class="brand ${devicesOf(c.id)[0].brand === 'RCH' ? 'rch' : 'ital'}">${esc(brandText(c.id))}</span>` : '') : 'Nuovo cliente';
   $('#vat-msg').textContent = ''; $('#vat-msg').className = 'small muted';
   $('#client-msg').textContent = '';
   const admin = state.profile?.role === 'admin';
   $('#client-del').hidden = !(c && (c.created_by === state.user.id || admin));
   $('#client-newev').hidden = !c;
   $('#client-events-box').hidden = true;
+  const devs = c ? devicesOf(c.id) : [];
+  $('#client-devices-box').hidden = !devs.length;
+  $('#client-devices').innerHTML = devs
+    .sort((a, b) => (devState(a) === 'none') - (devState(b) === 'none') || a.serial.localeCompare(b.serial))
+    .map((d) => `<div class="dev">${deviceHtml(d)}</div>`).join('');
   $('#client-dialog').returnValue = '';
   $('#client-dialog').showModal();
   if (c) {
@@ -2791,12 +3442,12 @@ function resolveEvClient() {
   const input = $('#ev-client'), drop = $('#ev-client-drop');
   const render = () => {
     const f = input.value.trim().toLowerCase();
-    const list = state.clients.filter((c) => !f || c.name.toLowerCase().includes(f) || (c.vat || '').includes(f) || (c.city || '').toLowerCase().includes(f)).slice(0, 7);
+    const list = state.clients.filter((c) => clientMatches(c, f)).slice(0, 7);
     drop.innerHTML = '';
     for (const c of list) {
       const b = document.createElement('button');
       b.type = 'button';
-      b.innerHTML = `${esc(c.name)}<small>${esc([c.city, c.vat].filter(Boolean).join(' · '))}</small>`;
+      b.innerHTML = `${esc(c.name)}<small>${esc([brandText(c.id), c.city, c.vat].filter(Boolean).join(' · '))}</small>`;
       b.addEventListener('mousedown', (e) => e.preventDefault());
       b.addEventListener('click', () => {
         setEvClient(c.id);
@@ -2934,7 +3585,8 @@ function attachWithSuggest(input, bar, onPick) {
       for (const c of cs.list) {
         const b = document.createElement('button');
         b.type = 'button'; b.className = 'chip';
-        b.innerHTML = `${ic('briefcase', 'ico ev-ico')} ${esc(c.name)}${c.city ? ` <small class="muted">${esc(c.city)}</small>` : ''}`;
+        const sub = [brandText(c.id), c.city].filter(Boolean).join(' · ');
+        b.innerHTML = `${ic('briefcase', 'ico ev-ico')} ${esc(c.name)}${sub ? ` <small class="muted">${esc(sub)}</small>` : ''}`;
         b.addEventListener('mousedown', (e) => e.preventDefault());
         b.addEventListener('click', () => put(c.name));
         bar.append(b);
@@ -3384,7 +4036,8 @@ function subscribeRealtime() {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, refetch)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'team_members' }, reloadTeams)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'alerts' }, () => { clearTimeout(ta); ta = setTimeout(loadAlerts, 300); })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, () => { clearTimeout(tc); tc = setTimeout(loadClients, 300); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, () => { clearTimeout(tc); tc = setTimeout(loadClients, 1500); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'devices' }, () => { clearTimeout(tc); tc = setTimeout(loadClients, 1500); })
     .subscribe();
 }
 document.addEventListener('visibilitychange', () => {
