@@ -336,6 +336,34 @@ input.chip { padding: .2rem .5rem; }
 #alert-popup .al-pop-body { padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: .75rem; max-height: 60dvh; overflow: auto; }
 #alert-popup .al-pop-foot { padding: 0 1.2rem 1.1rem; display: flex; gap: .5rem; justify-content: flex-end; }
 
+/* clienti */
+#clients-view { position: absolute; inset: 0; overflow: auto; background: var(--bg); z-index: 4; padding: 1.25rem 1.5rem 2rem; }
+.cl-head { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.cl-head h2 { font-size: 1.35rem; font-weight: 600; }
+.cl-head input { flex: 1; min-width: 180px; max-width: 420px; border-radius: 999px; padding-left: 1rem; }
+.cl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: .75rem; }
+.cl-card { background: var(--surface); border: 1px solid var(--line-soft); border-radius: 16px; padding: .9rem 1rem; cursor: pointer; transition: transform .12s, box-shadow .12s; }
+.cl-card:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+.cl-card b { display: block; font-size: 1rem; margin-bottom: .2rem; }
+.cl-card .muted { font-size: .8rem; line-height: 1.45; }
+#client-dialog { width: min(640px, calc(100% - 1.5rem)); height: fit-content; }
+.three { display: grid; grid-template-columns: 110px 1fr 70px; gap: .6rem; }
+.three input, .two input { width: 100%; }
+.three label { min-width: 0; }
+.vat-row { display: flex; gap: .5rem; align-items: flex-end; }
+.vat-row label { flex: 1; }
+#vat-msg.ok { color: #1e8e3e; } #vat-msg.err { color: var(--danger); }
+.cl-events { display: flex; flex-direction: column; gap: .2rem; max-height: 220px; overflow: auto; }
+.cl-ev { display: grid; grid-template-columns: 120px 1fr; gap: .5rem; padding: .35rem .5rem; border-radius: 8px; cursor: pointer; font-size: .88rem; }
+.cl-ev:hover { background: var(--hover); }
+.client-pick { position: relative; }
+.client-pick input { width: 100%; }
+.client-drop { position: absolute; left: 0; right: 0; top: calc(100% + 4px); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); z-index: 10; overflow: hidden; }
+.client-drop button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: .55rem .8rem; cursor: pointer; font-size: .9rem; }
+.client-drop button:hover, .client-drop button.hl { background: var(--hover); }
+.client-drop small { color: var(--muted); margin-left: .35rem; }
+.ev-client { font-weight: 600; }
+
 /* partecipanti ("con ...") */
 .suggest { display: flex; gap: .35rem; flex-wrap: wrap; align-items: center; }
 .suggest .lbl { font-size: .75rem; color: var(--muted); margin-right: .1rem; }
@@ -421,6 +449,9 @@ dialog::backdrop { background: rgba(0,0,0,.35); }
 
 /* ---------------- telefono ---------------- */
 @media (max-width: 860px) {
+  #clients-view { padding: 1rem .75rem 5rem; }
+  #clients-btn { display: none; }
+  .three { grid-template-columns: 90px 1fr 60px; }
   #board { padding: 1rem .75rem 5rem; }
   .board-grid { gap: 1.4rem; }
   #board-btn { display: none; }
@@ -618,6 +649,7 @@ dialog::backdrop { background: rgba(15, 17, 40, .35); backdrop-filter: blur(4px)
       <option value="listMonth">Programma</option>
     </select>
     <button class="alert-btn none" data-alert-btn title="Allerte" aria-label="Allerte"><span data-ico="siren"></span></button>
+    <button class="icon-btn" id="clients-btn" title="Clienti" data-ico="briefcase"></button>
     <button class="icon-btn" id="board-btn" title="Bacheca operatori (B)" data-ico="board"></button>
     <button class="icon-btn" id="team-btn" title="Gruppo di lavoro" data-ico="users"></button>
     <button class="avatar" id="avatar-btn" title="Account"></button>
@@ -644,6 +676,7 @@ dialog::backdrop { background: rgba(15, 17, 40, .35); backdrop-filter: blur(4px)
       <div id="calendar"></div>
       <div id="search-results" hidden></div>
       <div id="board" hidden></div>
+      <div id="clients-view" hidden></div>
     </main>
 
     <aside class="right" id="right">
@@ -777,6 +810,9 @@ dialog::backdrop { background: rgba(15, 17, 40, .35); backdrop-filter: blur(4px)
       </select>
     </div>
 
+    <div class="field-row"><span data-ico="briefcase"></span>
+      <div class="client-pick"><input id="ev-client" placeholder="Cliente (scrivi per cercare)" autocomplete="off"><div class="client-drop" id="ev-client-drop" hidden></div></div>
+    </div>
     <div class="field-row"><span data-ico="pin"></span><input name="location" placeholder="Aggiungi luogo" maxlength="200"></div>
     <div class="field-row"><span data-ico="text"></span><textarea name="description" rows="3" placeholder="Aggiungi descrizione"></textarea></div>
     <div class="field-row"><span data-ico="palette"></span><div class="colors" id="color-pick"></div></div>
@@ -791,6 +827,52 @@ dialog::backdrop { background: rgba(15, 17, 40, .35); backdrop-filter: blur(4px)
       <span class="spacer"></span>
       <button class="btn" type="button" id="event-cancel">Annulla</button>
       <button class="btn primary" type="submit" id="event-save">Salva</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- CLIENTE: anagrafica -->
+<dialog id="client-dialog">
+  <form id="client-form" class="stack">
+    <div class="row" style="justify-content:space-between">
+      <h2 id="client-title">Nuovo cliente</h2>
+      <button type="button" class="icon-btn sm" id="client-x" title="Chiudi" data-ico="x"></button>
+    </div>
+    <div class="vat-row">
+      <label>Partita IVA <input name="vat" maxlength="16" autocomplete="off" placeholder="es. 01234567890"></label>
+      <button type="button" class="btn" id="vat-lookup"><span data-ico="search"></span> Cerca dati</button>
+    </div>
+    <p id="vat-msg" class="small muted" style="margin:-.3rem 0 0"></p>
+    <label>Ragione sociale <input name="name" required maxlength="200"></label>
+    <div class="two">
+      <label>Codice fiscale <input name="tax_code" maxlength="16"></label>
+      <label>Codice SDI <input name="sdi" maxlength="7"></label>
+    </div>
+    <label>Indirizzo <input name="address" maxlength="200"></label>
+    <div class="three">
+      <label>CAP <input name="zip" maxlength="5"></label>
+      <label>Città <input name="city" maxlength="80"></label>
+      <label>Prov. <input name="province" maxlength="2"></label>
+    </div>
+    <div class="two">
+      <label>Telefono <input name="phone" type="tel" maxlength="40"></label>
+      <label>Email <input name="email" type="email" maxlength="120"></label>
+    </div>
+    <div class="two">
+      <label>PEC <input name="pec" type="email" maxlength="120"></label>
+      <label>Referente <input name="contact" maxlength="80"></label>
+    </div>
+    <label>Note <textarea name="notes" rows="2"></textarea></label>
+    <div id="client-events-box" hidden>
+      <h3 style="margin:.3rem 0 .4rem">Impegni con questo cliente</h3>
+      <div class="cl-events" id="client-events"></div>
+    </div>
+    <p class="msg" id="client-msg"></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn danger" id="client-del" hidden>Elimina</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="client-newev" hidden><span data-ico="plus"></span> Nuovo impegno</button>
+      <button type="submit" class="btn primary">Salva</button>
     </div>
   </form>
 </dialog>
@@ -945,6 +1027,7 @@ const ICONS = {
   send: '<path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4Z"/>',
   external: '<path d="M15 3h6v6M10 14 21 3M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/>',
   siren: '<path d="M7 18v-6a5 5 0 0 1 10 0v6"/><path d="M5 21a1 1 0 0 1-1-1v-1a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1a1 1 0 0 1-1 1z"/><path d="M21 12h1M18.5 4.5 18 5M2 12h1M12 2v1M4.93 4.93l.71.71M12 9v4"/>',
+  briefcase: '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2M2 13h20"/>',
   logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
 };
 const ic = (name, cls = 'ico') => `<svg class="${cls}" viewBox="0 0 24 24">${ICONS[name] || ''}</svg>`;
@@ -1177,6 +1260,7 @@ async function startApp(user) {
   checkReminders();
   openFromHash();
   loadAlerts();
+  loadClients();
 }
 
 // apertura da link esterno: #nuovo oppure #nuovo=2026-11-26
@@ -1546,6 +1630,8 @@ function eventContent(arg) {
   let owner = p.mine ? '' : (state.profiles.get(p.row.owner_id)?.display_name || 'Amministrazione');
   const people = peopleText(p.row);
   if (people) owner = owner ? `${owner} ${people}` : people;
+  const cl = clientName(p.row.client_id);
+  if (cl) owner = owner ? `${cl} · ${owner}` : cl;
   if (t.startsWith('timeGrid') && !arg.event.allDay) {
     const mins = arg.event.end ? (arg.event.end - arg.event.start) / 60000 : 60;
     if (mins <= 45) {
@@ -1585,7 +1671,7 @@ function viewTitle(view) {
 function goToday() { if (state.board) { state.boardDate = new Date(); renderBoard(); } else state.calendar.today(); }
 function goPrev() { if (state.board) { state.boardDate = addDays(state.boardDate, -1); renderBoard(); } else state.calendar.prev(); }
 function goNext() { if (state.board) { state.boardDate = addDays(state.boardDate, 1); renderBoard(); } else state.calendar.next(); }
-function showView(v) { setBoard(false); state.calendar.changeView(v); }
+function showView(v) { setBoard(false); setClientsView(false); state.calendar.changeView(v); }
 $('#today-btn').addEventListener('click', goToday);
 $('#prev-btn').addEventListener('click', goPrev);
 $('#next-btn').addEventListener('click', goNext);
@@ -1595,9 +1681,12 @@ function renderViewsMobile() {
   const box = $('#views-mobile');
   const cur = state.calendar?.view.type;
   box.innerHTML = `<button type="button" data-v="board" class="${state.board ? 'active' : ''}">Bacheca operatori</button>` +
+    `<button type="button" data-v="clients" class="${state.clientsView ? 'active' : ''}">Clienti</button>` +
     VIEWS.map(([v, label]) => `<button type="button" data-v="${v}" class="${!state.board && v === cur ? 'active' : ''}">${label}</button>`).join('');
   $$('button', box).forEach((b) => b.addEventListener('click', () => {
-    if (b.dataset.v === 'board') setBoard(true); else showView(b.dataset.v);
+    if (b.dataset.v === 'board') setBoard(true);
+    else if (b.dataset.v === 'clients') setClientsView(true);
+    else showView(b.dataset.v);
     setPanel('left', false);
   }));
 }
@@ -1832,8 +1921,11 @@ function openDetail(fcEvent, el) {
     ${p.mine && row.reminder_minutes != null ? `<div class="pop-row">${ic('bell')}<div>${esc(REMINDER_TEXT[row.reminder_minutes] || row.reminder_minutes + ' minuti prima')}</div></div>` : ''}
     <div class="pop-row">${ic('user')}<div>${esc(owner?.display_name || 'Amministrazione')}${p.mine ? ' <span class="muted">(tu)</span>' : ''}</div></div>
     ${(row.participants || []).length ? `<div class="pop-row">${ic('users')}<div>Insieme a: ${esc(participantNames(row, true))}</div></div>` : ''}
+    ${row.client_id && clientById(row.client_id) ? `<div class="pop-row">${ic('briefcase')}<div><a href="#" data-a="client" class="ev-client">${esc(clientName(row.client_id))}</a></div></div>` : ''}
     ${row.is_private ? `<div class="pop-row">${ic('lock')}<div>Privato</div></div>` : ''}`;
   pop.querySelector('[data-a=close]').onclick = closePopovers;
+  const clLink = pop.querySelector('[data-a=client]');
+  if (clLink) clLink.onclick = (e) => { e.preventDefault(); closePopovers(); openClient(row.client_id); };
   if (p.mine) {
     pop.querySelector('[data-a=edit]').onclick = () => { closePopovers(); openEventDialog(row); };
     pop.querySelector('[data-a=copy]').onclick = () => { closePopovers(); openEventDialog(null, { start, end, allDay: fcEvent.allDay }, { ...row, title: row.title + ' (copia)', repeat_freq: null }); };
@@ -1934,6 +2026,7 @@ function openEventDialog(row, sel, preset) {
   form.is_private.checked = !!src.is_private;
   form.reminder_minutes.value = src.reminder_minutes ?? '';
   evPeople = new Set(src.participants || []);
+  setEvClient(src.client_id || null);
   renderPeoplePick();
   $('#ev-suggest').hidden = true;
 
@@ -1990,6 +2083,7 @@ form.addEventListener('submit', async (e) => {
     repeat_until: freq && form.repeat_until.value ? form.repeat_until.value : null,
     reminder_minutes: reminder,
     participants: [...evPeople],
+    client_id: resolveEvClient(),
   };
   if (!freq) payload.repeat_except = [];
   $('#event-save').disabled = true;
@@ -2046,6 +2140,7 @@ async function startQuick(user) {
   setTimeout(() => $('#q-text').focus(), 50);
   checkTodayEmpty();
   loadAlerts();
+  loadClients();
 }
 
 // ---- bacheca dentro il pannello
@@ -2325,10 +2420,11 @@ async function handleMessage(text) {
     const { spec, rest } = parseDateSpec(part);
     if (spec || !cur) { cur = { spec, items: [] }; groups.push(cur); }
     const pp = extractParticipants(rest);
-    const tm = parseTime(pp.rest);
+    const cc = extractClient(pp.rest);
+    const tm = parseTime(cc.rest);
     const title = cleanTitle(tm.rest);
-    if (title) cur.items.push({ title, start: tm.start, end: tm.end, participants: pp.ids });
-    else if (tm.start) cur.items.push({ title: 'Promemoria', start: tm.start, end: tm.end, participants: pp.ids });
+    if (title) cur.items.push({ title, start: tm.start, end: tm.end, participants: pp.ids, client_id: cc.id });
+    else if (tm.start || cc.id) cur.items.push({ title: cc.id ? clientName(cc.id) : 'Promemoria', start: tm.start, end: tm.end, participants: pp.ids, client_id: cc.id });
   }
 
   for (const g of groups) {
@@ -2365,13 +2461,13 @@ async function createItems(date, items) {
       let e = null;
       if (it.end) { e = new Date(d0); e.setHours(it.end[0], it.end[1], 0, 0); }
       if (!e || e <= s) e = addMin(s, 60);
-      return { title: it.title, start_at: s.toISOString(), end_at: e.toISOString(), all_day: false, participants: it.participants || [] };
+      return { title: it.title, start_at: s.toISOString(), end_at: e.toISOString(), all_day: false, participants: it.participants || [], client_id: it.client_id || null };
     }
-    return { title: it.title, start_at: d0.toISOString(), end_at: addDays(d0, 1).toISOString(), all_day: true, participants: it.participants || [] };
+    return { title: it.title, start_at: d0.toISOString(), end_at: addDays(d0, 1).toISOString(), all_day: true, participants: it.participants || [], client_id: it.client_id || null };
   });
   const { data, error } = await sb.from('events').insert(rows).select('id');
   if (error) { addMsg('bot', 'Non sono riuscito a salvare: ' + errText(error)); return; }
-  const lines = rows.map((r) => `• ${r.all_day ? '' : timeStr(new Date(r.start_at)) + ' '}${r.title}${r.participants.length ? ' ' + peopleText(r) : ''}`).join('\n');
+  const lines = rows.map((r) => `• ${r.all_day ? '' : timeStr(new Date(r.start_at)) + ' '}${r.title}${r.participants.length ? ' ' + peopleText(r) : ''}${r.client_id ? ' · ' + clientName(r.client_id) : ''}`).join('\n');
   const b = addMsg('bot', `✓ ${rows.length > 1 ? 'Aggiunti' : 'Aggiunto'} per ${dayPhrase(d0)}:\n${lines}`, 'ok');
   const box = document.createElement('div');
   box.className = 'chips';
@@ -2504,6 +2600,251 @@ document.addEventListener('keydown', (e) => {
 });
 
 // =====================================================================
+//  CLIENTI
+// =====================================================================
+state.clients = [];
+state.clientsView = false;
+const clientById = (id) => state.clients.find((c) => c.id === id);
+const clientName = (id) => (id && clientById(id)?.name) || '';
+
+async function loadClients() {
+  if (!state.user) return;
+  const { data, error } = await sb.from('clients').select('*').order('name');
+  if (error) { console.warn('clienti:', error.message); return; }
+  state.clients = data;
+  if (state.clientsView) renderClients();
+}
+
+/** Partita IVA italiana: 11 cifre con cifra di controllo */
+function pivaOk(v) {
+  v = String(v || '').replace(/\D/g, '');
+  if (!/^\d{11}$/.test(v)) return false;
+  let sum = 0;
+  for (let i = 0; i < 11; i++) {
+    let c = +v[i];
+    if (i % 2 === 1) { c *= 2; if (c > 9) c -= 9; }
+    sum += c;
+  }
+  return sum % 10 === 0;
+}
+
+// ---- elenco clienti (vista nella pagina principale)
+function setClientsView(on) {
+  state.clientsView = !!on;
+  if (on && state.board) { state.board = false; store.set('rc.board', false); $('#board').hidden = true; $('#board-btn').classList.remove('active'); }
+  $('#clients-view').hidden = !on;
+  $('#clients-btn').classList.toggle('active', !!on);
+  if (on) { closePopovers(); renderClients(); $('#title').textContent = 'Clienti'; }
+  else if (state.calendar && !state.board) $('#title').textContent = viewTitle(state.calendar.view);
+  renderViewsMobile();
+}
+$('#clients-btn').addEventListener('click', () => setClientsView(!state.clientsView));
+
+let clientFilter = '';
+function renderClients() {
+  const box = $('#clients-view');
+  if (!box.querySelector('.cl-head')) {
+    box.innerHTML = `<div class="cl-head"><h2>Clienti</h2><span class="muted small" id="cl-count"></span>
+      <input id="cl-search" placeholder="Cerca per nome, città, P.IVA…" autocomplete="off">
+      <button class="btn primary" id="cl-new">${ic('plus')} Nuovo cliente</button></div><div class="cl-grid" id="cl-grid"></div>`;
+    $('#cl-search').addEventListener('input', (e) => { clientFilter = e.target.value; renderClients(); });
+    $('#cl-new').addEventListener('click', () => openClient(null));
+  }
+  const f = clientFilter.trim().toLowerCase();
+  const list = state.clients.filter((c) => !f || [c.name, c.city, c.vat, c.contact, c.phone, c.email].some((x) => (x || '').toLowerCase().includes(f)));
+  $('#cl-count').textContent = `${list.length} di ${state.clients.length}`;
+  const grid = $('#cl-grid');
+  grid.innerHTML = list.length ? '' : `<p class="muted">${state.clients.length ? 'Nessun cliente trovato.' : 'Ancora nessun cliente: premi «Nuovo cliente».'}</p>`;
+  for (const c of list) {
+    const el = document.createElement('div');
+    el.className = 'cl-card';
+    el.innerHTML = `<b>${esc(c.name)}</b><div class="muted">
+      ${c.city ? esc(c.city) + (c.province ? ` (${esc(c.province)})` : '') + '<br>' : ''}
+      ${c.vat ? 'P.IVA ' + esc(c.vat) + '<br>' : ''}${c.phone ? '☎ ' + esc(c.phone) : ''}${c.contact ? ' · ' + esc(c.contact) : ''}</div>`;
+    el.addEventListener('click', () => openClient(c.id));
+    grid.append(el);
+  }
+}
+
+// ---- scheda cliente
+let clientEditing = null, clientOnSaved = null;
+const CLIENT_FIELDS = ['name', 'vat', 'tax_code', 'address', 'zip', 'city', 'province', 'phone', 'email', 'pec', 'sdi', 'contact', 'notes'];
+
+async function openClient(id, preset = {}, onSaved = null) {
+  const c = id ? clientById(id) : null;
+  clientEditing = c;
+  clientOnSaved = onSaved;
+  const f = $('#client-form');
+  f.reset();
+  for (const k of CLIENT_FIELDS) f[k].value = (c ? c[k] : preset[k]) || '';
+  $('#client-title').textContent = c ? c.name : 'Nuovo cliente';
+  $('#vat-msg').textContent = ''; $('#vat-msg').className = 'small muted';
+  $('#client-msg').textContent = '';
+  const admin = state.profile?.role === 'admin';
+  $('#client-del').hidden = !(c && (c.created_by === state.user.id || admin));
+  $('#client-newev').hidden = !c;
+  $('#client-events-box').hidden = true;
+  $('#client-dialog').returnValue = '';
+  $('#client-dialog').showModal();
+  if (c) {
+    const { data } = await sb.from('events').select('*').eq('client_id', c.id).order('start_at', { ascending: false }).limit(60);
+    const box = $('#client-events');
+    box.innerHTML = '';
+    const evs = data || [];
+    $('#client-events-box').hidden = !evs.length;
+    for (const ev of evs) {
+      const d = new Date(ev.start_at);
+      const row = document.createElement('div');
+      row.className = 'cl-ev';
+      row.innerHTML = `<span class="muted">${esc(F_DAYYEAR.format(d))}${ev.all_day ? '' : ' ' + timeStr(d)}</span>
+        <span>${esc(ev.title)} <span class="muted small">· ${esc(ev.owner_id === state.user.id ? 'tu' : (state.profiles.get(ev.owner_id)?.display_name || 'Amministrazione'))}</span></span>`;
+      row.addEventListener('click', () => {
+        $('#client-dialog').close();
+        if (QUICK) { selectDay(d); return; }
+        setClientsView(false);
+        state.calendar.changeView(isMobile() ? 'timeGridDay' : 'timeGridWeek', ev.start_at);
+      });
+      box.append(row);
+    }
+  } else if (preset.name) setTimeout(() => f.vat.focus(), 30);
+  else setTimeout(() => f.vat.focus(), 30);
+}
+
+$('#client-x').addEventListener('click', () => $('#client-dialog').close());
+
+$('#vat-lookup').addEventListener('click', async () => {
+  const f = $('#client-form');
+  const raw = f.vat.value.trim();
+  const msg = $('#vat-msg');
+  const digits = raw.replace(/\D/g, '');
+  if (/^\d{11}$/.test(digits) && !pivaOk(digits)) { msg.textContent = 'Partita IVA non corretta (cifra di controllo sbagliata).'; msg.className = 'small err'; return; }
+  if (!raw) { msg.textContent = 'Scrivi la partita IVA.'; msg.className = 'small err'; return; }
+  msg.textContent = 'Cerco nell\'archivio europeo VIES…'; msg.className = 'small muted';
+  try {
+    const { data, error } = await sb.functions.invoke('lookup-vat', { body: { vat: raw } });
+    if (error) throw error;
+    if (!data.ok) throw new Error(data.error || 'Ricerca non riuscita');
+    if (!data.valid) { msg.textContent = 'Partita IVA non attiva o non trovata nell\'archivio VIES.'; msg.className = 'small err'; return; }
+    f.vat.value = data.vat;
+    const fill = (k, v) => { if (v) f[k].value = v; };
+    fill('name', data.name); fill('address', data.address); fill('zip', data.zip); fill('city', data.city); fill('province', data.province);
+    msg.textContent = data.name ? '✓ Partita IVA valida: dati compilati.' : '✓ Partita IVA valida (nome non disponibile da VIES: compilalo tu).';
+    msg.className = 'small ok';
+  } catch (e) {
+    msg.textContent = 'Ricerca non disponibile: ' + (e.message || e) + ' (la funzione lookup-vat è installata su Supabase?)';
+    msg.className = 'small err';
+  }
+});
+
+$('#client-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const row = {};
+  for (const k of CLIENT_FIELDS) row[k] = f[k].value.trim();
+  row.vat = row.vat.toUpperCase().replace(/\s/g, '');
+  row.province = row.province.toUpperCase();
+  if (row.vat && /^\d{11}$/.test(row.vat) && !pivaOk(row.vat)) { $('#client-msg').textContent = 'Partita IVA non corretta.'; return; }
+  const q = clientEditing
+    ? sb.from('clients').update(row).eq('id', clientEditing.id).select().single()
+    : sb.from('clients').insert(row).select().single();
+  const { data, error } = await q;
+  if (error) {
+    $('#client-msg').textContent = /duplicate|unique/i.test(error.message) ? 'Esiste già un cliente con questa partita IVA.' : errText(error);
+    return;
+  }
+  $('#client-dialog').close();
+  toast(clientEditing ? 'Cliente aggiornato' : 'Cliente salvato');
+  await loadClients();
+  state.calendar?.refetchEvents();
+  clientOnSaved?.(data);
+});
+
+$('#client-del').addEventListener('click', async () => {
+  if (!clientEditing || !confirm(`Eliminare il cliente «${clientEditing.name}»?\nGli impegni collegati restano, senza cliente.`)) return;
+  const { error } = await sb.from('clients').delete().eq('id', clientEditing.id);
+  if (error) return toast(errText(error), true);
+  $('#client-dialog').close();
+  toast('Cliente eliminato');
+  loadClients();
+});
+
+$('#client-newev').addEventListener('click', () => {
+  const c = clientEditing;
+  $('#client-dialog').close();
+  openEventDialog(null, null, { client_id: c.id, location: [c.address, c.city].filter(Boolean).join(', ') });
+});
+
+// ---- campo "Cliente" nella scheda impegno
+let evClientId = null;
+function setEvClient(id) {
+  evClientId = id;
+  $('#ev-client').value = clientName(id);
+  $('#ev-client-drop').hidden = true;
+}
+function resolveEvClient() {
+  const v = $('#ev-client').value.trim();
+  if (!v) return null;
+  if (evClientId && clientName(evClientId) === v) return evClientId;
+  return state.clients.find((c) => c.name.toLowerCase() === v.toLowerCase())?.id || null;
+}
+(() => {
+  const input = $('#ev-client'), drop = $('#ev-client-drop');
+  const render = () => {
+    const f = input.value.trim().toLowerCase();
+    const list = state.clients.filter((c) => !f || c.name.toLowerCase().includes(f) || (c.vat || '').includes(f) || (c.city || '').toLowerCase().includes(f)).slice(0, 7);
+    drop.innerHTML = '';
+    for (const c of list) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.innerHTML = `${esc(c.name)}<small>${esc([c.city, c.vat].filter(Boolean).join(' · '))}</small>`;
+      b.addEventListener('mousedown', (e) => e.preventDefault());
+      b.addEventListener('click', () => {
+        setEvClient(c.id);
+        if (!form.location.value && (c.address || c.city)) form.location.value = [c.address, c.city].filter(Boolean).join(', ');
+      });
+      drop.append(b);
+    }
+    if (input.value.trim().length >= 2 && !state.clients.some((c) => c.name.toLowerCase() === f)) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = `+ Nuovo cliente «${input.value.trim()}»`;
+      b.addEventListener('mousedown', (e) => e.preventDefault());
+      b.addEventListener('click', () => openClient(null, { name: cap(input.value.trim()) }, (c) => setEvClient(c.id)));
+      drop.append(b);
+    }
+    drop.hidden = !drop.children.length;
+  };
+  input.addEventListener('input', () => { evClientId = null; render(); });
+  input.addEventListener('focus', render);
+  input.addEventListener('blur', () => setTimeout(() => (drop.hidden = true), 150));
+})();
+
+// ---- chat: "cliente Bar Centrale"
+const CLIENT_TRIG = /\b(?:dal\s+|per\s+il\s+|presso\s+il\s+|il\s+)?cliente\s+([^,;\n]*)$/i;
+function clientSuggest(text) {
+  if (!state.clients.length) return null;
+  const seg = text.split(/[,;\n]/).pop();
+  const m = seg.match(CLIENT_TRIG);
+  if (!m) return null;
+  const partial = m[1];
+  const p = partial.trim().toLowerCase();
+  // nome già completo seguito da altro testo: niente suggerimenti
+  if (state.clients.some((c) => p.startsWith(c.name.toLowerCase() + ' ') || (p === c.name.toLowerCase() && /\s$/.test(partial)))) return null;
+  const list = state.clients.filter((c) => !p || c.name.toLowerCase().includes(p)).slice(0, 8);
+  if (!list.length && p.length < 2) return null;
+  return { list, partial, exact: state.clients.some((c) => c.name.toLowerCase() === p) };
+}
+function extractClient(text) {
+  if (!state.clients.length) return { id: null, rest: text };
+  const all = [...state.clients].sort((a, b) => b.name.length - a.name.length);
+  const alt = all.map((c) => escRe(c.name)).join('|');
+  const m = text.match(new RegExp(`\\b(?:dal\\s+|per\\s+il\\s+|presso\\s+il\\s+|il\\s+)?cliente\\s+(${alt})(?=$|[\\s,.;:!?])`, 'i'));
+  if (!m) return { id: null, rest: text };
+  const c = all.find((x) => x.name.toLowerCase() === m[1].toLowerCase());
+  return { id: c?.id || null, rest: text.slice(0, m.index) + ' ' + text.slice(m.index + m[0].length) };
+}
+
+// =====================================================================
 //  PARTECIPANTI ("con Mario e Giulia", "insieme a ...")
 // =====================================================================
 const WITH_SRC = '(?:con|insieme(?:\\s+(?:a|con))?|assieme\\s+a)';
@@ -2580,7 +2921,35 @@ function suggestFor(text) {
 /** Collega la barra dei suggerimenti a un campo di testo */
 function attachWithSuggest(input, bar, onPick) {
   const refresh = () => {
-    const sug = input.selectionStart === input.value.length ? suggestFor(input.value) : null;
+    const atEnd = input.selectionStart === input.value.length;
+    const cs = atEnd ? clientSuggest(input.value) : null;
+    if (cs) {
+      bar.hidden = false;
+      bar.innerHTML = '<span class="lbl">Cliente:</span>';
+      const put = (name) => {
+        const v = input.value.slice(0, input.value.length - cs.partial.length) + name + ' ';
+        input.value = v; input.focus(); input.setSelectionRange(v.length, v.length);
+        input.dispatchEvent(new Event('input'));
+      };
+      for (const c of cs.list) {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'chip';
+        b.innerHTML = `${ic('briefcase', 'ico ev-ico')} ${esc(c.name)}${c.city ? ` <small class="muted">${esc(c.city)}</small>` : ''}`;
+        b.addEventListener('mousedown', (e) => e.preventDefault());
+        b.addEventListener('click', () => put(c.name));
+        bar.append(b);
+      }
+      if (cs.partial.trim().length >= 2 && !cs.exact) {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'chip';
+        b.textContent = `+ Nuovo cliente «${cs.partial.trim()}»`;
+        b.addEventListener('mousedown', (e) => e.preventDefault());
+        b.addEventListener('click', () => openClient(null, { name: cap(cs.partial.trim()) }, (c) => put(c.name)));
+        bar.append(b);
+      }
+      return;
+    }
+    const sug = atEnd ? suggestFor(input.value) : null;
     bar.hidden = !sug;
     if (!sug) return;
     bar.innerHTML = '<span class="lbl">Insieme a:</span>';
@@ -2782,6 +3151,7 @@ function checkNewAlerts() {
 //  BACHECA OPERATORI (post-it: oggi + domani per ogni persona)
 // =====================================================================
 function setBoard(on) {
+  if (on) setClientsView(false);
   state.board = !!on;
   store.set('rc.board', state.board);
   $('#board').hidden = !state.board;
@@ -3007,13 +3377,14 @@ setInterval(checkReminders, 30000);
 // =====================================================================
 function subscribeRealtime() {
   if (state.channel) sb.removeChannel(state.channel);
-  let t, tm, ta;
+  let t, tm, ta, tc;
   const refetch = () => { clearTimeout(t); t = setTimeout(() => { state.calendar?.refetchEvents(); if (state.board) renderBoard(); if (QUICK) qLoad(); }, 300); };
   const reloadTeams = () => { clearTimeout(tm); tm = setTimeout(loadTeams, 300); };
   state.channel = sb.channel('rc-live')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, refetch)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'team_members' }, reloadTeams)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'alerts' }, () => { clearTimeout(ta); ta = setTimeout(loadAlerts, 300); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, () => { clearTimeout(tc); tc = setTimeout(loadClients, 300); })
     .subscribe();
 }
 document.addEventListener('visibilitychange', () => {
@@ -3031,6 +3402,7 @@ window.renkoBack = function () {
   if ($('#left').classList.contains('open')) { setPanel('left', false); return true; }
   if ($('#right').classList.contains('open')) { setPanel('right', false); return true; }
   if (!$('#search-results').hidden) { closeSearch(); return true; }
+  if (state.clientsView) { setClientsView(false); return true; }
   if (state.board && !QUICK) { setBoard(false); return true; }
   if (state.board && QUICK) { setQuickBoard(false); return true; }
   return false;
